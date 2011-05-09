@@ -1,0 +1,89 @@
+"Sometimes the strategic breakthrough will be a new algorithm, such as the Cooley-Tukey Fast Fourier Transform or the substitution of an n log n sort for an n 2 set of comparisons. Much more often, strategic breakthrough will come from redoing the representation of the data or tables. This is where the heart of a program lies. Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won’t usually need your flowcharts; they’ll be obvious."
+
+"The Mythical Man Month" by Fred Brooks
+
+The Name
+
+KOJAC is an acronym for Key Oriented JSON Application Cache. Yes you may know of Kojak, the 70s American TV cop show.
+
+http://en.wikipedia.org/wiki/Kojak
+
+The Vision
+
+* to streamline the process by which Flex application code requests data from a service layer and then from a server
+* to improve caching of data from the server by breaking it into atomic units (even as small as a simple integer) with individual caching rules
+* to reduce the number of server requests by combining multiple data requests into a single server request
+* to support NoSQL-style JSON "documents", meaning that a unit of data may be any valid JSON, from a single integer up to a deeply nested tree of objects, arrays and properties
+* to use the best ideas of REST where suitable. eg. Resources (eg. Product) and verbs (Create, Read, Update and Delete). eg. You "do" a verb to a "resource". An identifier is also needed to select what item or items to work with
+
+The Rules
+
+* server requests that change data (eg. create, update, delete) must return the full updated record to the client for updating its cache
+* the client may request a reduced set of fields for a record
+* the client application code should request all data through the cache, and handle responses asynchronously (eg. through a callback). The cache decides whether to then request from the server or return a stored record.
+
+Specifications
+
+* KOJAC primarily operates on a flat data store, that may be remote or local
+* The data store operates like a giant dictionary, in that any JSON-like document may be stored under a given unique id string
+* The id string or its format is not defined by KOJAC - it can be any string. Typically however it is worthwhile defining a naming convention for your application.
+* A naming convention is recommended below
+* The most likely use case for KOJAC is Rich Internet Applications (RIA's). Therefore this is the most commonly discussed scenario here. This scenario includes a server with a database, application logic on a remote client, and an internet connection and cache inbetween.
+* Its probably required to extend REST to include "list" for requesting mutiple items of a resource, and "call" for RPC-type use
+
+
+The RIA Cache
+
+The use of a key-value cache at the heart is thought to be a powerful architecture for RIAs. In this pattern, all requests for data throught the application would look something like :
+
+cache.getValue(
+	key,
+	function(aValue): {	// asynch result handler
+		...
+	}
+)
+
++ Simply by providing access to the cache object, all application data becomes accessible
++ the cache would either return a cached value immediately or request it from the server
++ The result therefore must be returned asynchronously to allow for a server request. A 
+synchronous getValue method could be provided, but it would have to fail or return null 
+when the value is not in the cache.
+
+The cache must handle the CRUD verbs :
+
++ Create
+
+The application passes initial values for the new item, but doesn't include the new id. The server creates the item and returns it back to the application, in full, with any necessary cache control options for storage in the client cache.
+
+
++ Read
+
+The application specifies the id - typically containing the resource and an id of a single item eg. "Product[25]". This item is returned in full with any necessary cache control options and stored in the client cache.
+
+
++ Update
+
+The application passes the unique id and any values that are to be updated. The server returns the item in full and stores it in the application cache.
+
+
++ Delete
+
+Just the id is required to delete a resource. On success the item is also deleted from the application cache.
+
+
++ List
+
+Returns an array of all items that match the criteria expressed in the id. eg. Customer[25]Orders
+
+
++ Call
+
+For calling functions on the server
+eg. "Calculate(1,2,3)"
+This requires careful caching options and id naming. All parameters should possibly be in the id for maximum effect
+
+Recommended Unique Id Naming Convention
+
+
+
+
