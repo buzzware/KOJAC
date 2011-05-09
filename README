@@ -30,7 +30,7 @@ Specifications
 * A naming convention is recommended below
 * The most likely use case for KOJAC is Rich Internet Applications (RIA's). Therefore this is the most commonly discussed scenario here. This scenario includes a server with a database, application logic on a remote client, and an internet connection and cache inbetween.
 * Its probably required to extend REST to include "list" for requesting mutiple items of a resource, and "call" for RPC-type use
-
+* When an error occurs during processing of a request item, the corresponding response item contains an error field and no value field. Also following requests are not processed (?) and the responses array may be shorter than the requests array
 
 The RIA Cache
 
@@ -85,5 +85,64 @@ This requires careful caching options and id naming. All parameters should possi
 Recommended Unique Id Naming Convention
 
 
+PACKET FORMAT
+
+REQUEST
+
+{
+	format: "MyEDiary",
+	requests: [
+		{
+			key: "SuperProduct[1]",
+			action: "update",					// create|read|update|delete
+			options: { ... },
+			cache: 5									// optional and is for client use only, so return to client in response
+		},
+		{
+			key: "SuperProduct[3]",
+			action: "update",
+			options: { ... },
+			cache: 5									
+		},
+		{
+			key: "TemperatureToday",
+			action: "read",
+			options: { ... },
+			cache: 5						
+		}
+	]
+}
+
+RESPONSE
+
+{
+	format: "MyEDiary",
+	responses: [										// contains one array per request unless error occurs
+		[															
+			{														
+				key: "SuperProduct[1]",		// first item of each response matches the request key
+				value: { ... },						// for create and update : all fields of object (could be an int or string or array etc any JSON type). For read, app may support eg. detail: brief|full option
+				options: { ... },
+				cache: 5
+			},
+			{														// one or more response objects per request
+				key: "somethingElse",
+				value: { ... },						
+				cache: 10
+			}
+		],
+		[
+			{														
+				key: "SuperProduct[3]",		// first item of each response matches the request key
+				action: "update",
+				options: { ... },
+				error: {									// an error is indicated by the presence of an error object.
+					"message": "something went wrong",
+					"stack": [ ... ]
+				}
+			}
+		]
+	]
+}
 
 
