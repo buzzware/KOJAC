@@ -1,4 +1,4 @@
-﻿<h3 style="color; red">Current Status</h3>
+<h3 style="color; red">Current Status</h3>
 <p style="color; red; font-weight: bold">
 Kojac has been implemented in ActionScript 3 and Javascript for separate projects, but has not yet been extracted for separate release. There is not yet any code here to see.
 </p>
@@ -45,4 +45,32 @@ As date in the cache is often up to date and in your application classes, very l
 <br/>
 <br/>
 KOJAC is server agnostic, open for hacking and debugging, uses and supports jQuery (especially Deferred Objects/Promises), prefers Ember.js but doesn't require it.
+
+## Code Examples
+
+1) Minimal example:
+
+<pre>
+kojac.read('products')
+</pre>
+
+...the results will eventually appear as kojac.cache.products
+
+2) Full example:
+
+<pre>
+kojac.read(['products','brands','categories__12']).done(function(aContext) {
+ 	// handle eg. aContext.results().products or aContext.ops[0].results.products or kojac.cache.products
+}).fail(function(aContext) {
+	// handle aContext.error()
+});
+</pre>
+
+3) Create
+
+<pre>
+kojac.create(['products']).done(function(aContext) {
+ 	// handle aContext.ops[0].result or kojac.cache[aContext.ops[0].resultKey]
+});
+</pre>
 
