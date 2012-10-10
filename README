@@ -1,148 +1,48 @@
-"Sometimes the strategic breakthrough will be a new algorithm, such as the Cooley-Tukey Fast Fourier Transform or the substitution of an n log n sort for an n 2 set of comparisons. Much more often, strategic breakthrough will come from redoing the representation of the data or tables. This is where the heart of a program lies. Show me your flowcharts and conceal your tables, and I shall continue to be mystified. Show me your tables, and I won’t usually need your flowcharts; they’ll be obvious."
+Ôªø<h3 style="color; red">Current Status</h3>
+<p style="color; red; font-weight: bold">
+Kojac has been implemented in ActionScript 3 and Javascript for separate projects, but has not yet been extracted for separate release. There is not yet any code here to see.
+</p>
 
-"The Mythical Man Month" by Fred Brooks
+------------------------
 
-The Name
+> "Sometimes the strategic breakthrough will be a new algorithm ... Much more often, strategic breakthrough will come from redoing the representation of the data or tables. This is where the heart of a program lies."   
+> - "The Mythical Man Month" by Fred Brooks
 
-KOJAC is an acronym for Key Oriented JSON Application Cache. Yes you may know of Kojak, the 70s American TV cop show.
+## What is KOJAC ?
 
-http://en.wikipedia.org/wiki/Kojak
+KOJAC is an acronym for Key Oriented JSON Application Cache. Yes you may know of [Kojak, the 1970s TV cop show](http://en.wikipedia.org/wiki/Kojak).
 
-The Vision
+KOJAC is an opinionated design and implementation for data management within ["single page"](http://en.wikipedia.org/wiki/Single-page_application) or ["Rich Internet"](http://en.wikipedia.org/wiki/Rich_Internet_application) applications. It relates most heavily to the client and data protocol. The server may continue the key/value style down to a key/value-style database if desired, but that is not necessary. KOJAC also makes sense for the client design when a standard REST-style server is to be used, but naturally multiple operations will require multiple server requests.
 
-* to streamline the process by which Flex application code requests data from a service layer and then from a server
-* to improve caching of data from the server by breaking it into atomic units (even as small as a simple integer) with individual caching rules
-* to reduce the number of server requests by combining multiple data requests into a single server request
-* to support NoSQL-style JSON "documents", meaning that a unit of data may be any valid JSON, from a single integer up to a deeply nested tree of objects, arrays and properties
-* to use the best ideas of REST where suitable. eg. Resources (eg. Product) and verbs (Create, Read, Update and Delete). eg. You "do" a verb to a "resource". An identifier is also needed to select what item or items to work with
+Single page applications require a different way of thinking, and present different challenges to traditional server-based applications. In particular, application state and user data must be managed and synchronised with the server. 
 
-The Rules
+Behind the design of KOJAC is the belief that how we structure and identify data has an enormous impact on the size and complexity of the application code.
 
-* server requests that change data (eg. create, update, delete) must return the full updated record to the client for updating its cache
-* the client may request a reduced set of fields for a record
-* the client application code should request all data through the cache, and handle responses asynchronously (eg. through a callback). The cache decides whether to then request from the server or return a stored record.
+#### 1) Think REST ...
 
-Specifications
+Like [REST](http://en.wikipedia.org/wiki/Representational_state_transfer), the server has "resources" eg. customers or products that the client may do CRUD (Create, Read, Update, Destroy) operations on. Unlike REST, URLs are replaced by keys. Keys follow a standard format eg. `<resource>__<id>`. 
 
-* KOJAC primarily operates on a flat data store, that may be remote or local
-* The data store operates like a giant dictionary, in that any JSON-like document may be stored under a given unique id string
-* The id string or its format is not defined by KOJAC - it can be any string. Typically however it is worthwhile defining a naming convention for your application.
-* A naming convention is recommended below
-* The most likely use case for KOJAC is Rich Internet Applications (RIA's). Therefore this is the most commonly discussed scenario here. This scenario includes a server with a database, application logic on a remote client, and an internet connection and cache inbetween.
-* Its probably required to extend REST to include "list" for requesting mutiple items of a resource, and "call" for RPC-type use
-* When an error occurs during processing of a request item, the corresponding response item contains an error field and no value field. Also following requests are not processed (?) and the responses array may be shorter than the requests array
+Values may be of any valid JSON type ie. Null, Int, Number, String, Boolean, Array, Object. Potentially the Client, server and protocol can use the same key/value schema.
 
-The RIA Cache
+#### 2) ...with multiple operations per request...
 
-The use of a key-value cache at the heart is thought to be a powerful architecture for RIAs. In this pattern, all requests for data throught the application would look something like :
+Multiple operations per http request. Freely specify a mixture of CRUD operations on any resources in a given order, and get back the results (including errors) of any operation. That means your data can be broken down to single values, and you can request just the values you need from the server.
 
-cache.getValue(
-	key,
-	function(aValue): {	// asynch result handler
-		...
-	}
-)
+#### 3) ...and an object factory.
 
-+ Simply by providing access to the cache object, all application data becomes accessible
-+ the cache would either return a cached value immediately or request it from the server
-+ The result therefore must be returned asynchronously to allow for a server request. A 
-synchronous getValue method could be provided, but it would have to fail or return null 
-when the value is not in the cache.
+An optional custom factory method easily converts raw JSON into your application classes and property types. When KOJAC is used with Ember.js, the included EmberModel class enables application models to be declared with typed properties, and data is intelligently converted (if required) when these properties are set. Model classes serve as a live data dictionary for your app, and provide a meaningful place for related methods. Typed properties simplify application code by reducing the need to check and convert types. 
 
-The cache must handle the CRUD verbs :
+#### 4) A central cache keeps things responsive
 
-+ Create
+Responses from the server update the cache (by default), keeping it fresh. With frameworks like Ember, the view can bind directly to the cache key eg. {rowIdsBinding: "App.cache.products"} for display as soon as it arrives. 
 
-The application passes initial values for the new item, but doesn't include the new id. The server creates the item and returns it back to the application, in full, with any necessary cache control options for storage in the client cache.
+#### 5) No boiler-plate code
+
+As date in the cache is often up to date and in your application classes, very little code is required to support or use the KOJAC framework once setup.
 
 
-+ Read
-
-The application specifies the id - typically containing the resource and an id of a single item eg. "Product[25]". This item is returned in full with any necessary cache control options and stored in the client cache.
-
-
-+ Update
-
-The application passes the unique id and any values that are to be updated. The server returns the item in full and stores it in the application cache.
-
-
-+ Delete
-
-Just the id is required to delete a resource. On success the item is also deleted from the application cache.
-
-
-+ List
-
-Returns an array of all items that match the criteria expressed in the id. eg. Customer[25]Orders
-
-
-+ Call
-
-For calling functions on the server
-eg. "Calculate(1,2,3)"
-This requires careful caching options and id naming. All parameters should possibly be in the id for maximum effect
-
-Recommended Unique Id Naming Convention
-
-
-PACKET FORMAT
-
-REQUEST
-
-{
-	format: "MyEDiary",
-	requests: [
-		{
-			key: "SuperProduct[1]",
-			action: "update",					// create|read|update|delete
-			options: { ... },
-			cache: 5									// optional and is for client use only, so return to client in response
-		},
-		{
-			key: "SuperProduct[3]",
-			action: "update",
-			options: { ... },
-			cache: 5									
-		},
-		{
-			key: "TemperatureToday",
-			action: "read",
-			options: { ... },
-			cache: 5						
-		}
-	]
-}
-
-RESPONSE
-
-{
-	format: "MyEDiary",
-	responses: [										// contains one array per request unless error occurs
-		[															
-			{														
-				key: "SuperProduct[1]",		// first item of each response matches the request key
-				value: { ... },						// for create and update : all fields of object (could be an int or string or array etc any JSON type). For read, app may support eg. detail: brief|full option
-				options: { ... },
-				cache: 5
-			},
-			{														// one or more response objects per request
-				key: "somethingElse",
-				value: { ... },						
-				cache: 10
-			}
-		],
-		[
-			{														
-				key: "SuperProduct[3]",		// first item of each response matches the request key
-				action: "update",
-				options: { ... },
-				error: {									// an error is indicated by the presence of an error object.
-					"message": "something went wrong",
-					"stack": [ ... ]
-				}
-			}
-		]
-	]
-}
-
+<br/>
+<br/>
+<br/>
+KOJAC is server agnostic, open for hacking and debugging, uses and supports jQuery (especially Deferred Objects/Promises), prefers Ember.js but doesn't require it.
 
