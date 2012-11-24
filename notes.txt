@@ -1,0 +1,28 @@
+
+
+
+
+
+
+6) Responses may optionally pass through a custom object factory function, to be transformed to eg. objects based on Kojac.EmberModel.
+EmberModel enables domain models to be declared with typed properties. eg.
+
+	Person = Kojac.EmberModel.extend({
+		id: Int,
+		name: String,
+		width: Int,
+		enabled: Boolean,
+		details: Object
+	});
+
+Property values passed to set() or setProperties() are intelligently coerced into the type of the property definition, or null, including when read from JSON. Regardless of the property type, null is the value used to represent a lack of value eg. not NaN or 0
+
+
+
+
+
+
+
+ 
+
+
