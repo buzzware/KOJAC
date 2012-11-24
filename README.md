@@ -1,11 +1,4 @@
-<h3 style="color; red">Current Status</h3>
-<p style="color; red; font-weight: bold">
-Kojac has been implemented in ActionScript 3 and Javascript for separate projects, but has not yet been extracted for separate release. There is not yet any code here to see.
-</p>
-
-------------------------
-
-> "Sometimes the strategic breakthrough will be a new algorithm ... Much more often, strategic breakthrough will come from redoing the representation of the data or tables. This is where the heart of a program lies."   
+> "Sometimes the strategic breakthrough will be a new algorithm ... Much more often, strategic breakthrough will come from redoing the representation of the data or tables. This is where the heart of a program lies."
 > - "The Mythical Man Month" by Fred Brooks
 
 ## What is KOJAC ?
