@@ -9,19 +9,21 @@
  *--------------------------------------------------------------------------*/
 package au.com.buzzware.kojac {
 
-	public class WormPersistenceProvider implements IPersistenceProvider {
-    public function WormPersistenceProvider() {
-    }
-
-		public function write(aKey: String,  aValue: String): void {
-			throw new Error('NYI')
-	  }
-    public function read(aKey: String): String {
-	    throw new Error('NYI')
-	    return null
-    }
-    public function remove(aKey: String): void {
-	    throw new Error('NYI')
-    }
+public class WormPersistenceProvider implements IPersistenceProvider {
+	public function WormPersistenceProvider() {
 	}
+
+	public function write(aKey: String, aValue: String): void {
+		throw new Error('NYI')
+	}
+
+	public function read(aKey: String): String {
+		throw new Error('NYI')
+		return null
+	}
+
+	public function remove(aKey: String): void {
+		throw new Error('NYI')
+	}
+}
 }

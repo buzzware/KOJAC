@@ -14,16 +14,16 @@ import au.com.buzzware.actiontools4.code.StringUtils;
 public class KojacUtils {
 
 	public static function idsFromFatCollection(aCollection: Array): Array {
-		return ObjectAndArrayUtils.ObjectArrayExtractPropertyValues(aCollection,'id')
+		return ObjectAndArrayUtils.ObjectArrayExtractPropertyValues(aCollection, 'id')
 	}
 
-	public static function keyCollectionFromIds(ids:Array, aKeyPrefix:String):Array {
-		return ids.map(function (e:*, ...r):* {
+	public static function keyCollectionFromIds(ids: Array, aKeyPrefix: String): Array {
+		return ids.map(function (e: *, ...r): * {
 			return aKeyPrefix + '__' + e.toString()
 		})
 	}
 
-	public static function keysFromFatCollection(aCollection:Array, aCollectionKey:String): Array {
+	public static function keysFromFatCollection(aCollection: Array, aCollectionKey: String): Array {
 		var ids: Array = idsFromFatCollection(aCollection)
 		return keyCollectionFromIds(ids, aCollectionKey);
 	}
@@ -45,7 +45,7 @@ public class KojacUtils {
 		var parts: Array = aKey.split('__')
 		if (!parts.length)
 			return 0;
-		return StringUtils.toInt(parts[parts.length-1])
+		return StringUtils.toInt(parts[parts.length - 1])
 	}
 
 }

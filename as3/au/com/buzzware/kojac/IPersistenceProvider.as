@@ -8,12 +8,14 @@
  *
  *--------------------------------------------------------------------------*/
 package au.com.buzzware.kojac {
-	public interface IPersistenceProvider {
+public interface IPersistenceProvider {
 
-	    function write(aKey: String,  aValue: String): void;
-	    function read(aKey: String): String;
-	    function remove(aKey: String): void;
+	function write(aKey: String, aValue: String): void;
 
-	}
+	function read(aKey: String): String;
+
+	function remove(aKey: String): void;
+
+}
 }
 

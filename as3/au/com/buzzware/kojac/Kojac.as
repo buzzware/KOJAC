@@ -9,38 +9,25 @@
  *--------------------------------------------------------------------------*/
 
 package au.com.buzzware.kojac {
-import allaboutecommerce.kojac.*;
-
-import aae.product_machine.app.Tinch;
 import aae.product_machine.app.VoFactory;
-import aae.product_machine.components.MobileOkCancelAlert;
-import aae.product_machine.components.MobilePopup;
-
-import au.com.buzzware.kojac.ValueObject;
 
 import au.com.buzzware.actiontools4.code.ReflectionUtils;
-
 import au.com.buzzware.actiontools4.code.StringUtils;
-
-import mx.core.FlexGlobals;
-
-import mx.core.UIComponent;
-import mx.events.CloseEvent;
 
 public class Kojac {
 
 	[Bindable]
-	public var cache:Object;
-	public var persist:IPersistenceProvider;
-	public var remote:IRemoteProvider;
-	public var factory:VoFactory;
+	public var cache: Object;
+	public var persist: IPersistenceProvider;
+	public var remote: IRemoteProvider;
+	public var factory: VoFactory;
 
 	[Bindable]
 	public var statusLine: String;
 	[Bindable]
 	public var requestStatusCount: int = 0;
 
-	public function Kojac(aCache:Object, aPersistenceProvider:IPersistenceProvider, aRemoteProvider:IRemoteProvider, aVoFactory:VoFactory = null) {
+	public function Kojac(aCache: Object, aPersistenceProvider: IPersistenceProvider, aRemoteProvider: IRemoteProvider, aVoFactory: VoFactory = null) {
 		statusLine = 'Genesis'
 		cache = aCache
 		persist = aPersistenceProvider
@@ -52,11 +39,11 @@ public class Kojac {
 	}
 
 	// accept multiple keys, but at present only act on the first one
-	public function read(aKeys:*, aHandler:Function = null, aOptions:Object = null):KojacRequest {
-		var keys:Array = aKeys is Array ? (aKeys as Array) : [aKeys]
-		var ops:Array = []
-		for each (var k:String in keys) {
-			var op:KojacOperation = new KojacOperation()
+	public function read(aKeys: *, aHandler: Function = null, aOptions: Object = null): KojacRequest {
+		var keys: Array = aKeys is Array ? (aKeys as Array) : [aKeys]
+		var ops: Array = []
+		for each (var k: String in keys) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.READ
 			op.key = k
 			ops.push(op)
@@ -66,42 +53,42 @@ public class Kojac {
 
 	// eg. create({products__29: {name: 'something'}},function (aRequest: KojacRequest):void {}, {})
 	// create no longer adds the created item id to any collection - that is left up to the app
-	public function create(aKeysValues: Object, aHandler:Function = null, aOptions:Object = null):KojacRequest {
-		var ops:Array = []
-		if (aKeysValues is Array) for each (var keyValueObject:Object in aKeysValues) {
-			var op:KojacOperation = new KojacOperation()
+	public function create(aKeysValues: Object, aHandler: Function = null, aOptions: Object = null): KojacRequest {
+		var ops: Array = []
+		if (aKeysValues is Array) for each (var keyValueObject: Object in aKeysValues) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.CREATE
-			for (var k:String in keyValueObject) {
+			for (var k: String in keyValueObject) {
 				op.key = k
 				op.value = keyValueObject[k]
 				break;
 			}
 			ops.push(op)
-		} else for (var k:String in aKeysValues) {
-			var op:KojacOperation = new KojacOperation()
+		} else for (var k: String in aKeysValues) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.CREATE
 			op.key = k
 			op.value = aKeysValues[k]
 			if (op.value is ValueObject)
-				op.value = ReflectionUtils.copyAllFields({},op.value);
+				op.value = ReflectionUtils.copyAllFields({}, op.value);
 			ops.push(op)
 		}
 		return performOperations(ops, aHandler, aOptions)
 	}
 
-	public function update(aKeysValues: Object, aHandler:Function = null, aOptions:Object = null):KojacRequest {
-		var ops:Array = []
-		if (aKeysValues is Array) for each (var keyValueObject:Object in aKeysValues) {
-			var op:KojacOperation = new KojacOperation()
+	public function update(aKeysValues: Object, aHandler: Function = null, aOptions: Object = null): KojacRequest {
+		var ops: Array = []
+		if (aKeysValues is Array) for each (var keyValueObject: Object in aKeysValues) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.UPDATE
-			for (var k:String in keyValueObject) {
+			for (var k: String in keyValueObject) {
 				op.key = k
 				op.value = keyValueObject[k]
 				break;
 			}
 			ops.push(op)
-		} else for (var k:String in aKeysValues) {
-			var op:KojacOperation = new KojacOperation()
+		} else for (var k: String in aKeysValues) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.UPDATE
 			op.key = k
 			op.value = aKeysValues[k]
@@ -110,10 +97,10 @@ public class Kojac {
 		return performOperations(ops, aHandler, aOptions)
 	}
 
-	public function destroy(aKeys: Array, aHandler: Function = null, aOptions:Object = null): KojacRequest {
-		var ops:Array = []
-		if (aKeys is Array) for each (var k:String in aKeys) {
-			var op:KojacOperation = new KojacOperation()
+	public function destroy(aKeys: Array, aHandler: Function = null, aOptions: Object = null): KojacRequest {
+		var ops: Array = []
+		if (aKeys is Array) for each (var k: String in aKeys) {
+			var op: KojacOperation = new KojacOperation()
 			op.verb = KojacOperation.DESTROY
 			op.key = k
 			op.value = aKeys[k]
@@ -122,12 +109,12 @@ public class Kojac {
 		return performOperations(ops, aHandler, aOptions)
 	}
 
-	public function performOperations(aOperations:Array, aHandler:Function = null, aOptions:Object = null):KojacRequest {
+	public function performOperations(aOperations: Array, aHandler: Function = null, aOptions: Object = null): KojacRequest {
 		if (!aOptions)
 			aOptions = new KojacRequestOptions();
 		else if (!(aOptions is KojacRequestOptions))
 			aOptions = new KojacRequestOptions(aOptions);
-		var req:KojacRequest = new KojacRequest()
+		var req: KojacRequest = new KojacRequest()
 		req.kojac = this
 		req.operations = aOperations
 		req.options = aOptions as KojacRequestOptions
@@ -144,17 +131,17 @@ public class Kojac {
 	}
 
 
-	public function valueObjectFactoryHandler(aRequest:KojacRequest):void {
+	public function valueObjectFactoryHandler(aRequest: KojacRequest): void {
 		factory.transformResultsToValueObjects(aRequest)
 	}
 
 
-	public function requestCompleteHandler(aRequest: KojacRequest=null): void {
+	public function requestCompleteHandler(aRequest: KojacRequest = null): void {
 		requestStatusCount--
 	}
 
 
-	protected function performRequest(aRequest:KojacRequest):void {
+	protected function performRequest(aRequest: KojacRequest): void {
 		if (!aRequest.options)
 			aRequest.options = new KojacRequestOptions();
 		updateStatusLine(aRequest)
@@ -177,17 +164,29 @@ public class Kojac {
 		}
 	}
 
-	public function updateStatusLine(aRequest: KojacRequest, aOperation: KojacOperation=null): void {
+	public function updateStatusLine(aRequest: KojacRequest, aOperation: KojacOperation = null): void {
 		var result: String
 		if (!aOperation)
-			aOperation = aRequest.operation; 
-		switch(aOperation.verb) {
-			case KojacOperation.CREATE: result = 'Create'; break;
-			case KojacOperation.READ: result = 'Get'; break;
-			case KojacOperation.UPDATE: result = 'Update'; break;
-			case KojacOperation.DESTROY: result = 'Delete'; break;
-			case KojacOperation.CRUPDATE: result = 'Update'; break;
-			case KojacOperation.REPLACE: result = 'Update'; break;
+			aOperation = aRequest.operation;
+		switch (aOperation.verb) {
+			case KojacOperation.CREATE:
+				result = 'Create';
+				break;
+			case KojacOperation.READ:
+				result = 'Get';
+				break;
+			case KojacOperation.UPDATE:
+				result = 'Update';
+				break;
+			case KojacOperation.DESTROY:
+				result = 'Delete';
+				break;
+			case KojacOperation.CRUPDATE:
+				result = 'Update';
+				break;
+			case KojacOperation.REPLACE:
+				result = 'Update';
+				break;
 		}
 		var resource: String = aOperation.key
 		var matches: Array = resource.match(/[a-zA-Z]+/g)
@@ -195,14 +194,14 @@ public class Kojac {
 		statusLine = result
 	}
 
-	protected function performCacheRequest(aRequest:KojacRequest):void {
+	protected function performCacheRequest(aRequest: KojacRequest): void {
 		throw new Error('Not yet implemented - read cache directly')
 	}
 
-	public function collectValuesOfKeys(aKeyArray:*):Array {
-		var result:Array = []
-		var keys:Array = aKeyArray as Array
-		for each (var k:String in keys) {
+	public function collectValuesOfKeys(aKeyArray: *): Array {
+		var result: Array = []
+		var keys: Array = aKeyArray as Array
+		for each (var k: String in keys) {
 			result.push(cache[k])
 		}
 		return result
@@ -212,8 +211,8 @@ public class Kojac {
 		var result: Array = []
 		if (!aIds)
 			return result;
-		for each (var i:int in aIds) {
-			result.push(cache[aPrefix+'__'+i.toString()])
+		for each (var i: int in aIds) {
+			result.push(cache[aPrefix + '__' + i.toString()])
 		}
 		return result
 	}
@@ -221,33 +220,36 @@ public class Kojac {
 	// this is not useful in a binding expression as it won't catch collection changes in the cache
 	public function collectCollection(aKeyOrIdCollectionKey: String): Array {
 		var coll: Array = cache[aKeyOrIdCollectionKey] as Array
-		if (coll==null)
+		if (coll == null)
 			return null;
 		var result: Array = []
-		if (coll.length==0)
+		if (coll.length == 0)
 			return result;
-		var isIds: Boolean = (typeof(coll[0])=='number')
+		var isIds: Boolean = (typeof(coll[0]) == 'number')
 		if (isIds)
-			return collectValuesOfIds(aKeyOrIdCollectionKey,coll);
+			return collectValuesOfIds(aKeyOrIdCollectionKey, coll);
 		else
 			return collectValuesOfKeys(coll);
 	}
 
 
-		public function keyIsItem(aKey: String): Boolean {
+	public function keyIsItem(aKey: String): Boolean {
 		if (!aKey)
 			return false;
 		var parts: Array = aKey.split('__')
-		return (parts.length>1) && (StringUtils.toInt(parts[parts.length-1])>0)
+		return (parts.length > 1) && (StringUtils.toInt(parts[parts.length - 1]) > 0)
 	}
 
 	public function keyIsCollection(aKey: String): Boolean {
 		if (!aKey)
 			return false;
-		switch(aKey) {
-			case 'time': return false;
-			case 'products': return true;
-			case 'products__images': return true;
+		switch (aKey) {
+			case 'time':
+				return false;
+			case 'products':
+				return true;
+			case 'products__images':
+				return true;
 		}
 		return !keyIsItem(aKey);
 	}
