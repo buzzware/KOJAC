@@ -66,9 +66,9 @@ public class KojacRequest {
 	}
 
 	public function cacheResults(): void {
+		if (this.error)
+			return;
 		for each (var op: KojacOperation in this.operations) {
-			if (op.error)
-				continue;
 			//trace('caching results ' + ObjectAndArrayUtils.getDynamicPropertyNames(op.results).join(','))
 			ObjectAndArrayUtils.copy_properties(kojac.cache, op.results, null, [op.result_key]);
 			kojac.cache[op.result_key] = op.result

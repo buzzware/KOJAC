@@ -131,6 +131,8 @@ public class Kojac {
 
 
 	public function valueObjectFactoryHandler(aRequest: KojacRequest): void {
+		if (aRequest.error)
+			return;
 		factory.transformResultsToValueObjects(aRequest)
 	}
 
