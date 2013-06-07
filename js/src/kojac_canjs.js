@@ -62,7 +62,7 @@
 			aInstanceProps = aInstanceProps || {};
 			aClass = aClass || {};
 
-			if (aClass && (aClass.hasOwnProperty('attributes') || aClass.hasOwnProperty('defaults') || aClass.hasOwnProperty('serialize') || aClass.hasOwnProperty('convert')))
+			if (aClass && (('attributes' in aClass) || ('defaults' in aClass) || ('serialize' in aClass) || ('convert' in aClass)))
 				throw new Error('attributes, defaults, serialize and convert not supported');
 
 			var attributes = {};

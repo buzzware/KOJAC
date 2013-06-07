@@ -27,16 +27,16 @@ describe("Kojac.CanCache Specs", function() {
 		});
 		var p = 'aobject';
 		cache.attr(p,testValues[p]);
-		var fromCache = cache.attr(p);
-		expect(fromCache.attr()).toEqual(testValues.aobject);
-		expect(fromCache.name).toEqual(testValues.aobject.name);
+		var cacheValue = cache.attr(p);
+		expect(cacheValue.attr()).toEqual(testValues.aobject);
+		expect(cacheValue.name).toEqual(testValues.aobject.name);
 
 		p = 'aarray';
 		cache.attr(p,testValues[p]);
-		fromCache = cache.attr(p);
-		expect(fromCache.attr()).toEqual(testValues[p]);
+		cacheValue = cache.attr(p);
+		expect(cacheValue.attr()).toEqual(testValues[p]);
 		for (var i=0;i<testValues[p].length;i++)
-			expect(fromCache[i]).toEqual(testValues[p][i]);
+			expect(cacheValue[i]).toEqual(testValues[p][i]);
 	});
 
 	it("Expose bug in can.Observe when setting attribute with another can.Observe", function() {

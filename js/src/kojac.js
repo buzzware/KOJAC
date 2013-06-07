@@ -18,9 +18,10 @@ Kojac = {};
  * By John Resig http://ejohn.org/blog/simple-javascript-inheritance/
  * MIT Licensed.
  *
+ * Inspired by base2 and Prototype
+ *
  * added setup method support inspired by CanJs as used in Kojac.Model
  *
- * Inspired by base2 and Prototype
  */
 (function(){
   var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
@@ -117,8 +118,18 @@ Kojac = {};
 })();
 
 
+/*
+ * @class Kojac.Utils
+ *
+ * Provides static functions used by Kojac
+ */
 Kojac.Utils = {
 
+	/**
+	 * Converts one or more keys, given in multiple possible ways, to a standard array of strings
+	 * @param aKeys one or more keys eg. as array of strings, or single comma-separated list in a single string
+	 * @return {Array} array of single-key strings
+	 */
 	interpretKeys: function(aKeys) {
 		if (_.isArray(aKeys))
 			return aKeys;
@@ -127,7 +138,11 @@ Kojac.Utils = {
 		return [];
 	},
 
-	// convert object or array to [key1, value, key2, value]
+	/**
+	 * Convert object or array to [key1, value, key2, value]
+	 * @param aKeyValues array or object of keys with values
+	 * @return {Array} [key1, value, key2, value]
+	 */
 	toKeyValueArray: function(aKeyValues) {
 		if (_.isArray(aKeyValues)) {
 			var first = aKeyValues[0];
@@ -142,8 +157,22 @@ Kojac.Utils = {
 		} else
 			return null;    // unrecognised input
 	}
+
+	//public static function getTrailingId(aKey: String): int {
+	//	if (!aKey)
+	//		return 0;
+	//	var parts: Array = aKey.split('__')
+	//	if (!parts.length)
+	//		return 0;
+	//	return StringUtils.toInt(parts[parts.length-1])
+	//}
 };
 
+/*
+ * Function used to determine the data type class of the given value
+ * @param {*} aValue
+ * @return {Class} eg. see Kojac.FieldTypes
+ */
 Kojac.getPropertyValueType = function(aValue) {
 	var t = _.typeOf(aValue);
 	var result;
@@ -166,8 +195,6 @@ Kojac.getPropertyValueType = function(aValue) {
 			result = Array;
 			break;
 		case 'object':
-//			if (aValue.__proto__ && aValue.__proto__===ComputedProperty.prototype)
-//				result = ComputedProperty;
 			result = Object;
 			break;
 		case 'function':
@@ -181,6 +208,12 @@ Kojac.getPropertyValueType = function(aValue) {
 };
 
 
+/*
+ * Function used to interpret aValue as the given aDestType which is one of the supported data type classes
+ * @param {*} aValue any value
+ * @param {Class} aDestType Class used to interpret aValue
+ * @return {*} aValue interpreted as destination type
+ */
 Kojac.interpretValueAsType = function(aValue, aDestType) {
 	var sourceType = Kojac.getPropertyValueType(aValue);
 	if (aDestType===sourceType)
@@ -270,9 +303,16 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 	return null;
 };
 
+/*
+ * Function used to read values from a given source object into the given destination object, using the given aDefinition
+ * @param {Object} aDestination
+ * @param {Object} aSource
+ * @param {Object} aDefinition
+ * @return {Object} aDestination object
+ */
 Kojac.readTypedProperties = function(aDestination, aSource, aDefinition) {
 	for (p in aSource) {
-		if (aDefinition.hasOwnProperty(p)) {
+		if (p in aDefinition) {
 			var value = aSource[p];
 			var destType = aDefinition[p];
 			if (destType===undefined)
@@ -285,6 +325,13 @@ Kojac.readTypedProperties = function(aDestination, aSource, aDefinition) {
 	return aDestination;
 };
 
+/*
+ * Returns an array of objects from the cache, based on a prefix and an array of ids
+ * @param {String} aPrefix
+ * @param {Array} aIds
+ * @param {Object} aCache
+ * @return {Array} of values from cache
+ */
 Kojac.collectIds = function(aPrefix,aIds,aCache) {
 	var result = [];
 	for (var i=0;i<aIds.length;i++)
@@ -293,6 +340,10 @@ Kojac.collectIds = function(aPrefix,aIds,aCache) {
 };
 
 
+/*
+ * Global static function that combines a given array of values (any number of arguments) into a cache key string, joined by double-underscores
+ * @return {String} cache key
+ */
 keyJoin = function() {
 	var result;
 	for (var i=0;i<arguments.length;i++) {
@@ -304,10 +355,6 @@ keyJoin = function() {
 	}
 	return result;
 }
-
-
-
-
 
 Int = {name: 'Int', toString: function() {return 'Int';}};    // represents a virtual integer type
 Null = {name: 'Null', toString: function() {return 'Null';}}; // represents a virtual Null type
@@ -383,7 +430,7 @@ Kojac.Model = Kojac.Object.extend({
 	 * @return {Boolean}
 	 */
 	isAttribute: function(aName) {
-		return this.constructor.__attributes && this.constructor.__attributes.hasOwnProperty(aName);
+		return this.constructor.__attributes && (aName in this.constructor.__attributes);
 	},
 
 	/**
@@ -417,13 +464,6 @@ Kojac.Model = Kojac.Object.extend({
 		}
 	}
 });
-
-/*
-
- It implements a stack of functions, and enables them to be called in sequence, passing a context object along to each.
- Depends on jQuery.
- */
-
 
 /**
  * Provides a dynamic asynchronous execution model. Handlers are added in queue or stack style, then executed in order, passing a given context object to each handler.
@@ -541,15 +581,11 @@ HandlerStack = Kojac.Object.extend({
 });
 
 
-//public static function getTrailingId(aKey: String): int {
-//	if (!aKey)
-//		return 0;
-//	var parts: Array = aKey.split('__')
-//	if (!parts.length)
-//		return 0;
-//	return StringUtils.toInt(parts[parts.length-1])
-//}
-
+/**
+ * Represents a single Kojac operation ie. READ, WRITE, UPDATE, DELETE or EXECUTE
+ * @class Kojac.Operation
+ * @extends Kojac.Object
+ */
 Kojac.Operation = Kojac.Object.extend({
 	request: this,
 	verb: null,
@@ -559,6 +595,7 @@ Kojac.Operation = Kojac.Object.extend({
 	result_key: null,
 	result: undefined,
 	error: null,         // set with some truthy error if this operation fails
+	performed: false,
 	fromCache: null,     // null means not performed, true means got from cache, false means got from server. !!! Should split this into performed and fromCache
 	receiveResult:function (aResponseOp) {
 		if (!aResponseOp) {
@@ -579,6 +616,11 @@ Kojac.Operation = Kojac.Object.extend({
 	}
 });
 
+/**
+ * Represents a single Kojac request, analogous to a HTTP request. It may contain 1 or more operations
+ * @class Kojac.Request
+ * @extends Kojac.Object
+ */
 Kojac.Request = Kojac.Object.extend({
 		kojac: null,
 		options: {},
@@ -713,14 +755,17 @@ Kojac.Request = Kojac.Object.extend({
 		}
 });
 
-// rename read, update etc to readRequest, updateRequest etc
-// support kojac.read('products',{options}).update([key, {values}],{options}).request().done(...)
+/**
+ * The Kojac core object
+ * @class Kojac.Core
+ * @extends Kojac.Object
+ */
 Kojac.Core = Kojac.Object.extend({
 
 		remoteProvider: null,
 		objectFactory: null,
 		cache: null,
-		dependant_keys: {},
+		dependentKeys: {},
 
 		newRequest: function() {
 			return new Kojac.Request({kojac: this});
@@ -755,7 +800,7 @@ Kojac.Core = Kojac.Object.extend({
 		cacheHasKeys: function(aKeysArray) {
 			var me = this;
 			return _.all(aKeysArray,function(k){
-				return me.cache.hasOwnProperty(k);
+				return k in me.cache;
 			})
 		},
 
@@ -778,7 +823,7 @@ Kojac.Core = Kojac.Object.extend({
 				if (i===0) {
 					aRequest.op = op;
 				}
-		    if (op.fromCache===false && op.options.cacheResults!==false) {
+		    if ((op.performed===true) && (op.fromCache===false) && (op.options.cacheResults!==false)) {
 			    var ex_key = (op.result_key || op.key);
 			    var dep_keys = [];
 			    for (var p in op.results) {
@@ -786,7 +831,12 @@ Kojac.Core = Kojac.Object.extend({
 				      continue;
 				    dep_keys.push(p);
 			    }
-		      aRequest.kojac.dependant_keys[op.key] = dep_keys
+			    if (!dep_keys.length) {
+			      if (op.key in aRequest.kojac.dependentKeys)
+			        delete aRequest.kojac.dependentKeys[op.key];
+				  } else {
+		        aRequest.kojac.dependentKeys[op.key] = dep_keys
+			    }
 		    }
 			}
 			aRequest.results = results;
@@ -797,18 +847,19 @@ Kojac.Core = Kojac.Object.extend({
 			for (var i=0;i<aRequest.ops.length;i++) {
 				var op = aRequest.ops[i];
 				var k = (op.result_key && (op.result_key !== op.key)) ? op.result_key : op.key;
-				if (op.verb=='READ' && op.options.preferCache && aRequest.kojac.cache.hasOwnProperty(k)) {   // resolve from cache
+				if (op.verb=='READ' && op.options.preferCache && (k in aRequest.kojac.cache)) {   // resolve from cache
 					op.results[k] = aRequest.kojac.cache[k];
-					var dep_keys = aRequest.kojac.dependant_keys[op.key];
+					var dep_keys = aRequest.kojac.dependentKeys[op.key];
 					if (dep_keys) {
 						for (var i=0;i<dep_keys.length;i++) {
 							var dk = dep_keys[i];
-							// what if not in cache? perhaps dump siblings in dependant_keys and index key to cause full refresh? or refuse to remove from cache if in dependant_keys
+							// what if not in cache? perhaps dump siblings in dependentKeys and index key to cause full refresh? or refuse to remove from cache if in dependentKeys
 							op.results[dk] = aRequest.kojac.cache[dk];
 						}
 					}
 					op.result_key = k;
-					op.fromCache = true
+					op.fromCache = true;
+					op.performed = true;
 				}
 			}
 			aRequest.handlers.add(this.remoteProvider.handleAjaxRequest,null,this.remoteProvider);
@@ -878,6 +929,11 @@ Kojac.Core = Kojac.Object.extend({
 		// END Convenience Functions
 });
 
+/**
+ * A default RemoteProvider implementation. Your own implementation, or a subclass of this may be used instead.
+ * @class Kojac.RemoteProvider
+ * @extends Kojac.Object
+ */
 Kojac.RemoteProvider = Kojac.Object.extend({
 
 	useMockFileValues: false,
@@ -912,11 +968,12 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 		var op;
 		for (var i=0;i<aRequest.ops.length;i++) {
 			op = aRequest.ops[i];
-			if (op.fromCache!==null)
+			if (op.performed)
 				continue;
 			if (op.verb==='READ' || op.verb==='EXECUTE') {
 				if (this.mockReadOperationHandler) {
 					result = this.mockReadOperationHandler(op);
+					op.performed = true;
 					if (op.fromCache===null)
 						op.fromCache = false;
 					return result;
@@ -924,13 +981,14 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 			} else {
 				if (this.mockWriteOperationHandler) {
 					result = this.mockWriteOperationHandler(op);
+					op.performed = true;
 					if (op.fromCache===null)
 						op.fromCache = false;
 					return result;
 				}
 			}
 		}
-		var server_ops = _.filterByCriteria(aRequest.ops,{fromCache: null});
+		var server_ops = _.filterByCriteria(aRequest.ops,{performed: false});
 		if (!server_ops.length)
 			return;
 		if (this.useMockFileValues) {
@@ -954,6 +1012,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 						}
 						aOp.receiveResult(aOp);
 						this.fromCache = false;
+						this.performed = true;
 					}
 				).fail(
 					function(jqXHR, textStatus) {
@@ -989,9 +1048,15 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 					var opResult = (_.isArray(aResult.ops) && (i<aResult.ops.length) && aResult.ops[i]);
 					opRequest.receiveResult(opResult);
 					opRequest.fromCache = false;
+					opRequest.performed = true;
 				}
 				aRequest.handlers.callNext();
 			}).fail(function(aXhr,aStatus,aError){
+				for (var i=0;i<server_ops.length;i++) {
+					var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
+					opRequest.fromCache = false;
+					opRequest.performed = true;
+				}
 				aRequest.error = aXhr;
 				aRequest.handlers.handleError(aXhr);
 				aRequest.handlers.callNext();
@@ -1000,6 +1065,11 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 	}
 });
 
+/**
+ * A default ObjectFactory implementation. Your own implementation, or a subclass of this may be used instead.
+ * @class Kojac.ObjectFactory
+ * @extends Kojac.Object
+ */
 Kojac.ObjectFactory = Kojac.Object.extend({
 
 	matchers: null,

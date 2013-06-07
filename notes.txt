@@ -19,10 +19,30 @@ Property values passed to set() or setProperties() are intelligently coerced int
 
 
 
+KOJAC Thoughts
 
+perhaps there are 3 valid requests :
 
+products						: collection
+products__50				: item
+products__50.images	: item property collection (IPC)
 
+standard key format :
+resource__index.property
 
- 
+An IPC can only be a property on an item, as defined on the server
+
+# Collection Properties and associations
+
++ server manages associations
++ client can create, read, append/prepend/insert, remove on a IPC
++ eg. customer has orders property.
+	- data is sent via orders_ids array
+	- orders property is a curried function configured to use the orders_ids property of this, to look up and return the records from the cache
+
+	Customer {
+		order_ids: [],	// will be array of integer or string ids
+		orders: [OrderVo,'order_ids','order'],	// becomes a function bound to the object that uses ids from order_ids and order prefix to read array of OrderVo's from cache
+	}
 
 
