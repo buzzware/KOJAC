@@ -37,6 +37,128 @@
 // 1. Create extendObject with properties: null
 // 2.
 
+
+//Decimal.ObjectFactory = Ember.Object.extend({
+//
+//	matchers: null,
+//
+//	register: function(aPairs) {
+//		if (!aPairs)
+//			return;
+//		if (this.matchers===null)
+//			this.matchers = [];
+//		for (var i = 0; i < aPairs.length; i++)
+//			this.matchers.push(aPairs[i]);
+//	},
+//
+//	emberClassFromKey: function(aKey) {
+//		var pair;
+//		var re;
+//		var newClass;
+//		for (var i = 0; i < this.matchers.length; i++) {
+//			pair = this.matchers[i];
+//			re = pair[0];
+//			if (!re.test(aKey))
+//				continue;
+//			newClass = pair[1];
+//			break;
+//		}
+//		if (newClass===undefined)
+//			newClass = Ember.Object;
+//		return newClass;
+//	},
+//
+//	emberObjectFactoryArray: function(aArray,aKey) {
+//		var newClass = this.emberClassFromKey(aKey);
+//		var result = [];
+//		for (var i=0; i<aArray.length; i++) {
+//			var newv = new newClass();
+//			newv.setProperties(aArray[i]);
+//			result.push(newv);
+//		}
+//		return result;
+//	},
+//
+//	emberObjectFactory: function(aObject,aKey) {
+//		var newClass = this.emberClassFromKey(aKey);
+//		var newv = new newClass();
+//		newv.setProperties(aObject);
+//		return newv;
+//	},
+//
+//	transformResultsToValueObjects: function(aRequest) {
+//		for (var i=0;i<aRequest.ops.length;i++) {
+//			var op = aRequest.ops[i];
+//			if (op.error)
+//				break;
+//			for (var k in op.results) {
+//				var v = op.results[k];
+//				if (!jQuery.isPlainObject(v))
+//					continue;
+//				op.results[k] = this.emberObjectFactory(v,k);
+//			}
+//		}
+//	}
+//
+//});
+//
+//
+//Decimal.KojacRemoteProvider = Ember.Object.extend({
+//
+//	useMockFileValues: false,
+//	mockReadOperationHandler: null,
+//	mockWriteOperationHandler: function(aOp) {
+//		console.log(JSON.stringify(EmberUtils.copyProperties({},aOp,null,['request'])));
+//	},
+//
+//	handleOperationFromFiles: function(aRequest) {
+//		var op = aRequest.handlers.parameter;
+//
+//		if (op.verb==='READ' || op.verb==='EXECUTE') {
+//			if (this.mockReadOperationHandler) {
+//				this.mockReadOperationHandler(op);
+//			} else {
+//				aRequest.handlers.waitForCallNext = true;
+//				var fp = '/em/dev/mockjson/'+op.key+'.js';
+//				var data = null;
+//				jQuery.ajax({url: fp, dataType: 'json', cache: false, data: data}).done(
+//					function( aData ) {
+//						for (p in aData)
+//							op[p] = aData[p];
+//						aRequest.handlers.callNext();
+//					}
+//				).fail(
+//					function(jqXHR, textStatus) {
+//						aRequest.handlers.handleError(textStatus);
+//					}
+//				);
+//			}
+//		} else {
+//			if (this.mockWriteOperationHandler)
+//				this.mockWriteOperationHandler(op);
+//		}
+//	},
+//
+//	handleAjaxRequest: function(aRequest) {
+//		var op = aRequest.parameter;
+//		aRequest.handlers.waitForCallNext = true;
+//		jQuery.ajax({},function(){
+//			aRequest.handlers.callNext();
+//		})
+//	},
+//
+//	addRequestHandlers: function(aRequest) {
+//		if (this.useMockFileValues) {
+//			for (var i=0;i<aRequest.ops.length;i++)
+//				aRequest.handlers.add(this.handleOperationFromFiles,aRequest.ops[i],this);
+//		} else {
+//			aRequest.handlers.add(this.handleAjaxRequest,null,this);
+//		}
+//	}
+//
+//});
+
+
 Kojac.EmberModel = Ember.Object.extend({});
 
 Kojac.EmberModel.reopenClass({
@@ -115,24 +237,19 @@ Kojac.EmberModel.reopenClass({
 
 Kojac.EmberModel.reopen({
 
-	___set: Kojac.EmberModel.prototype.set,
+	___set: Ember.set,
 	set: function(k,v) {
 		var def = this.constructor.getDefinitions();
 		var t = (def && def[k]);
 		if (t)
 			v = Kojac.interpretValueAsType(v,t);
-		return this.___set(k,v);
+		return this.___set(this,k,v);
 	},
 
-	___get: Kojac.EmberModel.prototype.get,
-	get: function(k) {
-		return this.___get(k);
-	},
-
-	___setProperties: Kojac.EmberModel.prototype.setProperties,
+	___setProperties: Ember.setProperties,
 	setProperties: function(values) {
 		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
-		return this.___setProperties(values);
+		return this.___setProperties(this,values);
 	}
 
 });
@@ -173,3 +290,6 @@ Kojac.collectIds = function(aPrefix,aIds,aCache) {
 		result.push(aCache.get(aPrefix+'__'+aIds[i]));
 	return result;
 };
+
+
+
