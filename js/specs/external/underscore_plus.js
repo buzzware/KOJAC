@@ -50,6 +50,13 @@ _.stringify = function(aObject) {
 //              }
 //       }
 
+_.concat = function(aArray,aAnotherArray) {
+	var result = [];
+	result.push.apply(result, aArray);
+	result.push.apply(result, aAnotherArray);
+	return result;
+};
+
 _.nameValueString = function(aObject) {
 	return _.map(_.keys(aObject),function(k) { return k+'="'+_.stringify(aObject[k])+'"'}).join(' ');
 };

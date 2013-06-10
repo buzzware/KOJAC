@@ -109,8 +109,7 @@ describe("Kojac Mock", function() {
 			expect(op.verb).toEqual('CREATE');
 			expect(op.key).toEqual('order_item');
 			expect(op.value).toEqual({name: 'Fred'});
-			expect(op.result_key).toEqual('order_item__54');
-			expect(op.results).toBeUndefined();
+			expect(op.results).toEqual({});
 		});
 		waitsFor(function() { return req.isResolved(); }, "request done", 3000);
 		runs(function() {
@@ -149,7 +148,7 @@ describe("Kojac Mock", function() {
 			expect(op.key).toEqual('order_item__54');
 			expect(op.value).toEqual({name: 'John'});
 			expect(op.result_key).toEqual(op.key);
-			expect(op.results).toBeUndefined();
+			expect(op.results).toEqual({});
 		});
 		waitsFor(function() { return req.isResolved(); }, "request done", 3000);
 		runs(function() {
@@ -186,7 +185,7 @@ describe("Kojac Mock", function() {
 			expect(op.key).toEqual('order_item__54');
 			expect(op.value).toBeUndefined();
 			expect(op.result_key).toEqual(op.key);
-			expect(op.results).toBeUndefined();
+			expect(op.results).toEqual({});
 		});
 		waitsFor(function() { return req.isResolved(); }, "request done", 3000);
 		runs(function() {
@@ -218,7 +217,7 @@ describe("Kojac Mock", function() {
 			expect(op.key).toEqual('results');
 			expect(op.value).toEqual({a: 1,b:2});
 			expect(op.result_key).toEqual(op.key);
-			expect(op.results).toBeUndefined();
+			expect(op.results).toEqual({});
 		});
 		waitsFor(function() { return req.isResolved(); }, "request done", 3000);
 		runs(function() {

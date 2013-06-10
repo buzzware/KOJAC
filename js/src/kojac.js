@@ -148,9 +148,12 @@ Kojac.Utils = {
 			var first = aKeyValues[0];
 			if (_.isArray(first))         // this style : [[key,value],[key,value]]
 				return _.map(aKeyValues,function(o){ return _.flatten(o,true) });
-			else if (_.isObject(first))   // this style : [{key: value},{key: value}]
-				return _.map(aKeyValues,function(o){ return _.pairs(o) });
-			else
+			else if (_.isObject(first)) {   // this style : [{key: value},{key: value}]
+				var result = [];
+				for (var i=0; i<aKeyValues.length; i++)
+					result.push(_.pairs(aKeyValues[i]));
+				return _.flatten(result);
+			} else
 				return aKeyValues;          // assume already [key1, value, key2, value]
 		} else if (_.isObject(aKeyValues)) {
 			return _.flatten(_.pairs(aKeyValues),true); // this style : {key1: value, key2: value}
