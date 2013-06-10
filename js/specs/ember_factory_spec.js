@@ -1,12 +1,12 @@
-describe("Kojac Mock", function() {
+describe("Ember Factory", function() {
 
-	OrderItem = Kojac.EmberModel.extend({
-		id: Int,
-		customer_id: Int,
-		product_id: Int
-	});
+	 var OrderItem = Ember.Object.extend({});
+//		id: Int,
+//		customer_id: Int,
+//		product_id: Int
+//	});
 
-	Product = Ember.Object.extend({
+	var Product = Ember.Object.extend({
 
 	});
 

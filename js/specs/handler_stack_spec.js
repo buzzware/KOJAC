@@ -60,19 +60,19 @@ describe("HandlerStack", function() {
 		hs.add(function(aContext) {
 			context.text += 'X';
 		});
-		runs(function() {
-			hs.execute(context);
-			context.then(function(aContext){
-				context.text += 'W';
-			});
-			context.done(function(aContext){
-				context.text += 'Z';
-			});
-			context.fail(function(aContext){
-				context.text += 'F';
-			});
+		hs.execute(context);
+		context.then(function(aContext){
+			context.text += 'W';
 		});
-		waitsFor(function() { return context.isRejected(); }, "rejected", 3000);
+		context.done(function(aContext){
+			context.text += 'Z';
+		});
+		context.fail(function(aContext){
+			context.text += 'F';
+		});
+		waitsFor(function() {
+			return context.isRejected();
+		}, "rejected", 3000);
 		runs(function() {
 			expect(context.text).toBe('ABF');
 			expect(context.error).toBeDefined();

@@ -574,6 +574,27 @@ HandlerStack = Kojac.Object.extend({
 		this.context = aContext;
 		this.deferred = jQuery.Deferred();
 		this.deferred.promise(this.context);
+		if (this.context.isResolved===undefined)
+			this.context.isResolved = _.bind(
+				function() {
+					return this.state()==='resolved'
+				},
+				this.context
+			);
+		if (this.context.isRejected===undefined)
+			this.context.isRejected = _.bind(
+				function() {
+					return this.state()==='rejected'
+				},
+				this.context
+			);
+		if (this.context.isPending===undefined)
+			this.context.isPending = _.bind(
+				function() {
+					return this.state()==='pending'
+				},
+				this.context
+			);
 		this.nextHandlerIndex = 0;
 		this.callNext();
 		return this.context;
