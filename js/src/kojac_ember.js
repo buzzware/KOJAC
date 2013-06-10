@@ -38,74 +38,76 @@
 // 2.
 
 
-//Decimal.ObjectFactory = Ember.Object.extend({
+Kojac.EmberObjectFactory = Kojac.Object.extend({
+
+	matchers: null,
+
+	register: function(aPairs) {
+		if (!aPairs)
+			return;
+		if (this.matchers===null)
+			this.matchers = [];
+		for (var i = 0; i < aPairs.length; i++)
+			this.matchers.push(aPairs[i]);
+	},
+
+	emberClassFromKey: function(aKey) {
+		var pair;
+		var re;
+		var newClass;
+		for (var i = 0; i < this.matchers.length; i++) {
+			pair = this.matchers[i];
+			re = pair[0];
+			if (!re.test(aKey))
+				continue;
+			newClass = pair[1];
+			break;
+		}
+		if (newClass===undefined)
+			newClass = Ember.Object;
+		return newClass;
+	},
+
+	emberObjectFactoryArray: function(aArray,aKey) {
+		var newClass = this.emberClassFromKey(aKey);
+		var result = [];
+		for (var i=0; i<aArray.length; i++) {
+			var newv = new newClass();
+			newv.setProperties(aArray[i]);
+			result.push(newv);
+		}
+		return result;
+	},
+
+	emberObjectFactory: function(aObject,aKey) {
+		var newClass = this.emberClassFromKey(aKey);
+		var newv = new newClass();
+		newv.setProperties(aObject);
+		return newv;
+	},
+
+	transformResultsToValueObjects: function(aRequest) {
+		for (var i=0;i<aRequest.ops.length;i++) {
+			var op = aRequest.ops[i];
+			if (op.error)
+				break;
+			for (var k in op.results) {
+				var v = op.results[k];
+				if (!jQuery.isPlainObject(v))
+					continue;
+				op.results[k] = this.emberObjectFactory(v,k);
+			}
+		}
+	}
+
+});
+
 //
-//	matchers: null,
 //
-//	register: function(aPairs) {
-//		if (!aPairs)
-//			return;
-//		if (this.matchers===null)
-//			this.matchers = [];
-//		for (var i = 0; i < aPairs.length; i++)
-//			this.matchers.push(aPairs[i]);
-//	},
-//
-//	emberClassFromKey: function(aKey) {
-//		var pair;
-//		var re;
-//		var newClass;
-//		for (var i = 0; i < this.matchers.length; i++) {
-//			pair = this.matchers[i];
-//			re = pair[0];
-//			if (!re.test(aKey))
-//				continue;
-//			newClass = pair[1];
-//			break;
-//		}
-//		if (newClass===undefined)
-//			newClass = Ember.Object;
-//		return newClass;
-//	},
-//
-//	emberObjectFactoryArray: function(aArray,aKey) {
-//		var newClass = this.emberClassFromKey(aKey);
-//		var result = [];
-//		for (var i=0; i<aArray.length; i++) {
-//			var newv = new newClass();
-//			newv.setProperties(aArray[i]);
-//			result.push(newv);
-//		}
-//		return result;
-//	},
-//
-//	emberObjectFactory: function(aObject,aKey) {
-//		var newClass = this.emberClassFromKey(aKey);
-//		var newv = new newClass();
-//		newv.setProperties(aObject);
-//		return newv;
-//	},
-//
-//	transformResultsToValueObjects: function(aRequest) {
-//		for (var i=0;i<aRequest.ops.length;i++) {
-//			var op = aRequest.ops[i];
-//			if (op.error)
-//				break;
-//			for (var k in op.results) {
-//				var v = op.results[k];
-//				if (!jQuery.isPlainObject(v))
-//					continue;
-//				op.results[k] = this.emberObjectFactory(v,k);
-//			}
-//		}
-//	}
-//
-//});
-//
-//
-//Decimal.KojacRemoteProvider = Ember.Object.extend({
+//ExampleRemoteProvider = Ember.Object.extend({
 //
 //	useMockFileValues: false,
+//  mockFilePath: '',
 //	mockReadOperationHandler: null,
 //	mockWriteOperationHandler: function(aOp) {
 //		console.log(JSON.stringify(EmberUtils.copyProperties({},aOp,null,['request'])));
@@ -119,7 +121,7 @@
 //				this.mockReadOperationHandler(op);
 //			} else {
 //				aRequest.handlers.waitForCallNext = true;
-//				var fp = '/em/dev/mockjson/'+op.key+'.js';
+//				var fp = mockFilePath+op.key+'.js';
 //				var data = null;
 //				jQuery.ajax({url: fp, dataType: 'json', cache: false, data: data}).done(
 //					function( aData ) {
