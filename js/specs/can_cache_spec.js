@@ -5,7 +5,7 @@ describe("Kojac.CanCache Specs", function() {
 		var factory = new Kojac.CanObjectFactory({});
 		this.kojac = new Kojac.Core({
 			cache: this.cache,
-			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true,mockFilePath: '/em/dev/mockjson/'}),
+			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true,mockFilePath: 'mockjson/'}),
 			objectFactory: factory
 		});
 	});

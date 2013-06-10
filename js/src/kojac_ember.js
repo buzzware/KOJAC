@@ -102,9 +102,10 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 });
 
-//
-//
+
+
 //ExampleRemoteProvider = Ember.Object.extend({
+//Kojac.RemoteProvider = Kojac.Object.extend({
 //
 //	useMockFileValues: false,
 //  mockFilePath: '',
