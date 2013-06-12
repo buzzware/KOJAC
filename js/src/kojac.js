@@ -1054,8 +1054,10 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 		} else {
 			var opsJson = this.operationsToJson(server_ops);
 			var dataToSend = {
-				format: 'KOJAC-1.0',
-				ops: opsJson
+				kojac: {
+					version: 'KOJAC-1.0',
+					ops: opsJson
+				}
 			};
 			aRequest.handlers.waitForCallNext = true;
 			var ajaxpars = {

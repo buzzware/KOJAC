@@ -59,7 +59,6 @@ describe("Kojac Mock", function() {
 			expect(op.result_key).toEqual(op.key);
 			expect(typeof(op.results)).toBe('object');
 			expect(op.results.order_item).toEqual([49,50,51]);
-			//expect(Ember.typeOf(op.results.order_item__49)).toBe('instance');
 			expect(op.results.order_item__49.constructor).toBe(OrderItem);
 			expect(op.results.order_item__49.id).toEqual(49);
 			expect(op.results.order_item__49.accountRef).toEqual("000049X");
@@ -70,7 +69,6 @@ describe("Kojac Mock", function() {
 			expect(op.result_key).toEqual(op.key);
 			expect(typeof(op.results)).toBe('object');
 			expect(op.results.product).toEqual([3,4,5]);
-			//expect(Ember.typeOf(op.results.product__3)).toBe('instance');
 			expect(op.results.product__3.constructor).toBe(Product);
 			expect(op.results.product__3.name).toEqual("Product 3");
 			expect(op.results.product__3.provider).toEqual("AJAX Pty Ltd");
@@ -78,7 +76,6 @@ describe("Kojac Mock", function() {
 			expect(op.verb).toEqual('READ');
 			expect(op.key).toEqual('order_item__50');
 			expect(op.result_key).toEqual(op.key);
-			//expect(Ember.typeOf(op.results.order_item__50)).toBe('instance');
 			expect(op.results.order_item__50.constructor).toBe(OrderItem);
 			expect(op.results.order_item__50.accountRef).toEqual("000050X");
 			expect(op.results.order_item__50.memberTypeId).toEqual("CDB");
@@ -120,7 +117,6 @@ describe("Kojac Mock", function() {
 			expect(op.result_key).toEqual('order_item__54');
 			expect(typeof(op.results)).toBe('object');
 			expect(op.results.order_item).toBeUndefined();
-			//expect(Ember.typeOf(op.results.order_item__54)).toBe('instance');
 			expect(op.results.order_item__54.constructor).toBe(OrderItem);
 			expect(op.results.order_item__54.name).toEqual("Fred");
 
@@ -157,7 +153,6 @@ describe("Kojac Mock", function() {
 			expect(op.result_key).toEqual(op.key);
 			expect(typeof(op.results)).toBe('object');
 			expect(op.results.order_item).toBeUndefined();
-			//expect(Ember.typeOf(op.results.order_item__54)).toBe('instance');
 			expect(op.results.order_item__54.constructor).toBe(OrderItem);
 			expect(op.results.order_item__54.name).toEqual("John");
 
