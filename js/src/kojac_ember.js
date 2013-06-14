@@ -38,7 +38,7 @@
 // 2.
 
 
-Kojac.EmberObjectFactory = Ember.Object.extend({
+Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 	matchers: null,
 

@@ -11,7 +11,7 @@ describe("HandlerStack", function() {
 			context.text += 'C';
 		});
 		runs(function() {
-			hs.execute(context);
+			hs.run(context);
 		});
 		waitsFor(function() { return context.isResolved(); }, "request done", 3000);
 		runs(function() {
@@ -33,7 +33,7 @@ describe("HandlerStack", function() {
 			context.text += 'X';
 		});
 		runs(function() {
-			hs.execute(context);
+			hs.run(context);
 			context.then(function(aContext){
 				context.text += 'W';
 			});
@@ -60,7 +60,7 @@ describe("HandlerStack", function() {
 		hs.add(function(aContext) {
 			context.text += 'X';
 		});
-		hs.execute(context);
+		hs.run(context);
 		context.then(function(aContext){
 			context.text += 'W';
 		});
@@ -88,7 +88,7 @@ describe("HandlerStack", function() {
 			context.text += 'B';
 		});
 		runs(function() {
-			hs.execute(context);
+			hs.run(context);
 			context.then(function(aContext){
 				context.text += 'W';
 			});
@@ -105,7 +105,7 @@ describe("HandlerStack", function() {
 
 		runs(function() {
 			context = {text: 'G'};
-			hs.execute(context);
+			hs.run(context);
 			context.then(function(aContext){
 				context.text += 'W';
 			});
@@ -133,7 +133,7 @@ describe("HandlerStack", function() {
 		var testClass = new TestClass();
 		hs.add(testClass.go,null,testClass); // note: using ability to specify this as third parameter
 		runs(function() {
-			hs.execute(context);
+			hs.run(context);
 		});
 		waitsFor(function() { return context.isResolved(); }, "resolved", 3000);
 		runs(function() {

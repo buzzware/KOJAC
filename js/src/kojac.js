@@ -573,7 +573,7 @@ HandlerStack = Kojac.Object.extend({
 		}
 	},
 
-	execute: function(aContext) {
+	run: function(aContext) {
 		this.context = aContext;
 		this.deferred = jQuery.Deferred();
 		this.deferred.promise(this.context);
@@ -893,7 +893,7 @@ Kojac.Core = Kojac.Object.extend({
 				aRequest.handlers.add(this.cache.cacheResults,null,this.cache);
 			else
 				aRequest.handlers.add(this.cacheResults,null,this);
-			aRequest.handlers.execute(aRequest).then(this.finaliseRequest);
+			aRequest.handlers.run(aRequest).then(this.finaliseRequest);
 			return aRequest;
 		},
 
