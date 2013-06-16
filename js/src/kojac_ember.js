@@ -166,7 +166,7 @@ Kojac.EmberModel = Ember.Object.extend({});
 
 Kojac.EmberModel.reopenClass({
 
-	_extend: Ember.Object.extend,
+	//_extend: Ember.Object.extend,
 
 	extend: function() {
 		var defs = arguments[0];
@@ -175,13 +175,13 @@ Kojac.EmberModel.reopenClass({
 		var defaults = this.getDefaults();
 		var _type;
 		var _value;
-		var _init;
+		//var _init;
 		if (defs) {
 			for (p in defs) {
 				var pValue = defs[p];
-				if (p=='init') {
-					_init = pValue;
-				} else {
+//				if (p=='init') {
+//					_init = pValue;
+//				} else {
 					if (Kojac.FieldTypes.indexOf(pValue)>=0) { // pValue is field type
 						definitions[p] = pValue;
 						defaults[p] = null;
@@ -191,30 +191,30 @@ Kojac.EmberModel.reopenClass({
 						if (ft && (Kojac.SimpleTypes.indexOf(ft)>=0)) {  // pValue is simple field value
 							definitions[p] = ft;
 							defaults[p] = pValue;
-							extender[p] = null;
+							extender[p] = pValue;
 						} else {  // pValue is something else
 							//definitions[p] = _type;
 							//defaults[p] = _value;
 							extender[p] = pValue;
 						}
 					}
-				}
+	//			}
 			}
-			extender.init = function() {  // we need to call the super init, then initialise default values, then call the given init
-				this._super();
-				var defaults = this.constructor.getDefaults();
-				for (dp in defaults)
-					this[dp] = defaults[dp];
-				if (_init) {
-					var _super = this._super;
-					this._super = function() {};  // temporarily disable _super to make init function work like normal ember init
-					_init.call(this);
-					if (_super)
-						this._super = _super;       // restore _super
-				}
-			};
+//			extender.init = function() {  // we need to call the super init, then initialise default values, then call the given init
+//				this._super();
+//				//var defaults = this.constructor.getDefaults();
+//				//for (dp in defaults)
+//				//	this[dp] = defaults[dp];
+//				if (_init) {
+//					var _super = this._super;
+//					this._super = function() {};  // temporarily disable _super to make init function work like normal ember init
+//					_init.call(this);
+//					if (_super)
+//						this._super = _super;       // restore _super
+//				}
+//			};
 		}
-		var result = this._extend(extender);
+		var result = this._super(extender);
 		result.setDefinitions(definitions);
 		result.setDefaults(defaults);
 		return result;
@@ -234,6 +234,24 @@ Kojac.EmberModel.reopenClass({
 
 	getDefaults: function() {
 		return this._defaults || {};
+	},
+
+	__createWithMixins: Kojac.EmberModel.createWithMixins,
+	createWithMixins: function() {
+		var inputs = arguments;
+		if (inputs.length) {
+			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
+		}
+		return this.__createWithMixins.apply(this,inputs);
+  },
+
+	__create: Kojac.EmberModel.create,
+	create: function() {
+		var inputs = arguments;
+		if (inputs.length) {
+			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
+		}
+		return this.__create.apply(this,inputs);
 	}
 
 });
@@ -256,6 +274,7 @@ Kojac.EmberModel.reopen({
 	}
 
 });
+
 
 Kojac.EmberCache = Ember.Object.extend({
 

@@ -50,6 +50,42 @@ describe("Kojac Ember Model", function() {
 		});
 	});
 
+	it("Ember.Object extend and create", function() {
+		var product3def = {
+			name: 'Fred',
+			shape: 'circle'
+		};
+		var Product3 = Kojac.EmberModel.extend(product3def);
+		var product3 = Product3.create();
+		expect(product3.get('name')).toEqual('Fred');
+		expect(product3.get('shape')).toEqual('circle');
+
+		var product3 = Product3.create();
+		expect(product3.get('name')).toEqual(product3def.name);
+		var product3 = Product3.create({});
+		expect(product3.get('name')).toEqual(product3def.name);
+		var product3 = Product3.create({name: 'John', colour: 'red'});
+		expect(product3.get('name')).toEqual('John');
+		expect(product3.get('shape')).toEqual('circle');
+		expect(product3.get('colour')).toEqual('red');
+	});
+
+	it("check create values", function() {
+		var product = Product1.create(product2Values);
+		expect(product.get('name')).toBe(product2Values.name);
+		expect(product.get('purchases')).toBe(product2Values.purchases);
+		expect(product.get('weight')).toBe(product2Values.weight);
+		expect(product.get('isMember')).toBe(product2Values.isMember);
+	});
+
+	it("check create values requiring conversion", function() {
+		var product = Product1.create(wrongProductValues);
+		expect(product.get('name')).toBe('123');
+		expect(product.get('purchases')).toBe(2);
+		expect(product.get('weight')).toBe(null);
+		expect(product.get('isMember')).toBe(true);
+	});
+
 	it("check set values requiring conversion", function() {
 		var product = Product1.create();
 		for (p in wrongProductValues)
@@ -112,6 +148,32 @@ describe("Kojac Ember Model", function() {
 		expect(cust.first_name).toBe(initValues.first_name);
 		expect(cust.last_name).toBe(initValues.last_name);
 		expect(cust.get('full_name')).toBe(initValues.first_name+' '+initValues.last_name);
+	});
+
+	it("real world example", function() {
+		var Westcorp = {};
+		Westcorp.FinanceProvider = Kojac.EmberModel.extend({
+			id: Int,
+			name: String
+		});
+		Westcorp.FinanceProviders = [
+			Westcorp.FinanceProvider.create({
+				id: 1,
+				name: 'GE Automotive'
+			}),
+			Westcorp.FinanceProvider.create({
+				id: 2,
+				name: 'St George Bank'
+			}),
+			Westcorp.FinanceProvider.create({
+				id: 3,
+				name: 'Esanda ANZ'
+			})
+		];
+		expect(Westcorp.FinanceProviders[0].get('id')).toEqual(1);
+		expect(Westcorp.FinanceProviders[0].get('name')).toEqual('GE Automotive');
+		expect(Westcorp.FinanceProviders[1].get('id')).toEqual(2);
+		expect(Westcorp.FinanceProviders[1].get('name')).toEqual('St George Bank');
 	});
 
 });
