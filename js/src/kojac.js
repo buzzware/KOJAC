@@ -359,6 +359,16 @@ keyJoin = function() {
 	return result;
 }
 
+keyResource = function(aKey) {
+	var parts = aKey.split('__');
+	return parts[0];
+}
+
+keyId = function(aKey) {
+	var parts = aKey.split('__');
+	return parts[1];
+}
+
 Int = {name: 'Int', toString: function() {return 'Int';}};    // represents a virtual integer type
 Null = {name: 'Null', toString: function() {return 'Null';}}; // represents a virtual Null type
 Kojac.FieldTypes = [Null,Int,Number,String,Boolean,Date,Array,Object];  // all possible types for fields in Kojac.Model
@@ -668,6 +678,7 @@ Kojac.Request = Kojac.Object.extend({
 		},
 
 		// {key: value} or [{key1: value},{key2: value}] or {key1: value, key2: value}
+		// Can give existing keys with id, and will create a clone in database with a new id
 		create: function(aKeyValues,aOptions) {
 
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
@@ -682,7 +693,7 @@ Kojac.Request = Kojac.Object.extend({
 				op.verb = 'CREATE';
 				op.options = _.clone(options);
 				op.params = params && _.clone(params);
-				op.key = k;
+				op.key = keyResource(k);
 				if ((i===0) && result_key)
 					op.result_key = result_key;
 				op.value = v;
@@ -977,8 +988,12 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 				verb: op.verb,
 				key: op.key
 			};
-			if ((op.verb==='CREATE') || (op.verb==='UPDATE') || (op.verb==='EXECUTE'))
-				jsonOp.value = op.value;
+			if ((op.verb==='CREATE') || (op.verb==='UPDATE') || (op.verb==='EXECUTE')) {
+				if (op.value && ("toObject" in op.value))
+					jsonOp.value = op.value.toObject(op.options);
+				else
+					jsonOp.value = op.value;
+			}
 			var options = op.options && _.omit(op.options,['cacheResults','preferCache']);
 			if (options && !_.isEmpty(options))
 				jsonOp.options = options;   // omit local keys

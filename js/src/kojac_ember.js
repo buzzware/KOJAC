@@ -271,12 +271,52 @@ Kojac.EmberModel.reopen({
 	setProperties: function(values) {
 		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
 		return this.___setProperties(this,values);
+	},
+
+	toObject: function(aOptions) {
+		var result = {};
+		var defs = this.constructor.getDefinitions();
+		var includes = aOptions && aOptions.include
+		for (var p in defs)
+			result[p] = this.get(p);
+		if (includes) {
+			includes = this.getProperties(includes);
+			var v;
+			for (var p in includes) {
+				v = includes[p];
+				if ((typeof(v)=="object") && ("toObject" in v))
+					includes[p] = v.toObject();
+			}
+			_.extend(result,includes);
+		}
+		return result;
 	}
 
 });
 
 
 Kojac.EmberCache = Ember.Object.extend({
+
+	generateKey: function(aPrefix) {
+		var key;
+		do {
+			key = aPrefix+'__'+(-_.random(1000000,2000000)).toString();
+		} while (key in this);
+		return key;
+	},
+
+	store: function(aKeysValues) {
+		this.beginPropertyChanges();
+		for (p in aKeysValues) {
+			if (aKeysValues[p]===undefined) {
+				this.set(p,undefined);
+				delete this[p];
+			} else {
+				this.set(p,aKeysValues[p]);
+			}
+		}
+		this.endPropertyChanges();
+	},
 
 	cacheResults: function(aRequest) {
 		this.beginPropertyChanges();
@@ -286,14 +326,7 @@ Kojac.EmberCache = Ember.Object.extend({
 				break;
 			if (op.options.cacheResults===false)
 				continue;
-			for (p in op.results) {
-				if (op.results[p]===undefined) {
-					this.set(p,undefined);
-					delete this[p];
-				} else {
-					this.set(p,op.results[p]);
-				}
-			}
+			this.store(op.results);
 		}
 		this.endPropertyChanges();
 	},
