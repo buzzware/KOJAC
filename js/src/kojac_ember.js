@@ -305,6 +305,16 @@ Kojac.EmberCache = Ember.Object.extend({
 		return key;
 	},
 
+	generateId: function(aPrefix) {
+		var key;
+		var id;
+		do {
+			id = -_.random(1000000,2000000)
+			key = aPrefix+'__'+id.toString();
+		} while (key in this);
+		return id;
+	},
+
 	store: function(aKeysValues) {
 		this.beginPropertyChanges();
 		for (p in aKeysValues) {
