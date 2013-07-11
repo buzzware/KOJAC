@@ -335,10 +335,14 @@ Kojac.readTypedProperties = function(aDestination, aSource, aDefinition) {
  * @param {Object} aCache
  * @return {Array} of values from cache
  */
-Kojac.collectIds = function(aPrefix,aIds,aCache) {
+Kojac.collectIds = function(aPrefix,aIds,aCache,aFilterFn) {
 	var result = [];
-	for (var i=0;i<aIds.length;i++)
-		result.push(aCache[aPrefix+'__'+aIds[i]]);
+	var item;
+	for (var i=0;i<aIds.length;i++) {
+		item = aCache[aPrefix+'__'+aIds[i]];
+		if (!aFilterFn || aFilterFn(item))
+			result.push(item);
+	}
 	return result;
 };
 
@@ -348,9 +352,11 @@ Kojac.collectIds = function(aPrefix,aIds,aCache) {
  * @return {String} cache key
  */
 keyJoin = function() {
-	var result;
+	var result = null;
 	for (var i=0;i<arguments.length;i++) {
 		var v = arguments[i];
+		if (!v)
+			return null;
 		if (!result)
 			result = v.toString();
 		else
@@ -997,6 +1003,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 			var options = op.options && _.omit(op.options,['cacheResults','preferCache']);
 			if (options && !_.isEmpty(options))
 				jsonOp.options = options;   // omit local keys
+			jsonOp.params = op.params;
 			result.push(jsonOp);
 		}
 		return result

@@ -347,14 +347,55 @@ Kojac.EmberCache = Ember.Object.extend({
 
 });
 
-Kojac.collectIds = function(aPrefix,aIds,aCache) {
+Kojac.collectIds = function(aPrefix,aIds,aCache,aFilterFn) {
 	if (!aIds)
 		return [];
 	var result = [];
-	for (var i=0;i<aIds.length;i++)
-		result.push(aCache.get(aPrefix+'__'+aIds[i]));
+	var item;
+	for (var i=0;i<aIds.length;i++) {
+		item = aCache.get(aPrefix+'__'+aIds[i]);
+		if (!aFilterFn || aFilterFn(item))
+			result.push(item);
+	}
 	return result;
 };
 
+Ember.computed.collectIds = function(aCollectionProperty,aPrefix,aModelCachePath,aFilterFn){
+	if (!aPrefix)
+		aPrefix = _.last(aCollectionProperty.split('.'));
 
+  return Ember.computed(aCollectionProperty, function(){
+	  var cache;
+	  if (aModelCachePath)
+	    cache = Ember.Handlebars.get(this,aModelCachePath);  //(aModelCachePath && Ember.get(aModelCachePath));
+	  else
+		  cache = this;
+	  var ids = Ember.Handlebars.get(this,aCollectionProperty);
+	  if (!ids)
+	 		return [];
+	 	var result = [];
+	 	var item;
+	 	for (var i=0;i<ids.length;i++) {
+	 		item = cache.get(aPrefix+'__'+ids[i]);
+	 		if (!aFilterFn || aFilterFn(item))
+	 			result.push(item);
+	 	}
+	 	return result;
+  }).property(aModelCachePath,aCollectionProperty);
+}
 
+Ember.computed.modelById = function(aIdProperty,aPrefix,aModelCachePath) {
+	if (!aModelCachePath)
+		aModelCachePath = 'App.cache';
+
+	return Ember.computed(aIdProperty, function(){
+		var id = Ember.Handlebars.get(this,aIdProperty);
+		if (!id)
+			return null;
+		var cache = Ember.Handlebars.get(this,aModelCachePath);
+		var key = keyJoin(aPrefix,id);
+		if (!key || !cache)
+			return null;
+		return Ember.Handlebars.get(cache,key);
+	}).property(aModelCachePath,aIdProperty);
+}
