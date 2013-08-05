@@ -111,7 +111,7 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 //  mockFilePath: '',
 //	mockReadOperationHandler: null,
 //	mockWriteOperationHandler: function(aOp) {
-//		console.log(JSON.stringify(EmberUtils.copyProperties({},aOp,null,['request'])));
+//		log.debug(JSON.stringify(EmberUtils.copyProperties({},aOp,null,['request'])));
 //	},
 //
 //	handleOperationFromFiles: function(aRequest) {
@@ -382,7 +382,38 @@ Ember.computed.collectIds = function(aCollectionProperty,aPrefix,aModelCachePath
 	 	}
 	 	return result;
   }).property(aModelCachePath,aCollectionProperty);
-}
+};
+
+Ember.computed.has_many = function(aResource,aForeignKey,aLocalPropertyPath,aModelCachePath,aFilterFn){
+
+  return Ember.computed(function(){
+	  var cache;
+	  if (aModelCachePath)
+	    cache = Ember.Handlebars.get(this,aModelCachePath);  //(aModelCachePath && Ember.get(aModelCachePath));
+	  else
+		  cache = this;
+	  var localValue = Ember.Handlebars.get(this,aLocalPropertyPath);
+
+	  if (!_.endsWith(aResource,'__'))
+	    aResource = aResource+'__';
+
+	  var results = [];
+	  // get all keys that begin with aPrefix
+	  var keys = _.keys(cache);
+	  for (var i=0;i<keys.length;i++) {
+		  var k = keys[i];
+		  if (!_.beginsWith(k,aResource))
+		    continue;
+		  var v = cache.get(k);
+		  if (!v || (v.get(aForeignKey) != localValue))
+			  continue;
+		  if (aFilterFn && !aFilterFn(k,v))
+		    continue;
+		  results.push(v);
+	  }
+	 	return results;
+  }).property(aModelCachePath,aLocalPropertyPath);
+};
 
 Ember.computed.modelById = function(aIdProperty,aPrefix,aModelCachePath) {
 	if (!aModelCachePath)
@@ -398,4 +429,8 @@ Ember.computed.modelById = function(aIdProperty,aPrefix,aModelCachePath) {
 			return null;
 		return Ember.Handlebars.get(cache,key);
 	}).property(aModelCachePath,aIdProperty);
-}
+};
+
+
+
+

@@ -365,6 +365,31 @@ keyJoin = function() {
 	return result;
 }
 
+keySplit = function(aKey) {
+	var r,ia,id,a;
+	var parts = aKey.split('__');
+	if (parts.length>=1)      // resource
+		r = parts[0];
+	else
+		return [];
+	var result = [r];
+	if (parts.length<2)
+		return result;
+	ia = parts[1];
+	parts = ia.split('.');
+	if (parts.length>=1) {    // id
+		id = parts[0];
+		var id_as_i = Number(id);
+		if (_.isFinite(id_as_i))
+			id = id_as_i;
+		result.push(id);
+	}
+	if (parts.length>=2) {    // association
+		result.push(parts[1]);
+	}
+	return result;
+}
+
 keyResource = function(aKey) {
 	var parts = aKey.split('__');
 	return parts[0];
@@ -647,7 +672,12 @@ Kojac.Operation = Kojac.Object.extend({
 			var response_key = aResponseOp.result_key || this.key;
 			var final_result_key = this.result_key || response_key; // result_key should not be specified unless trying to override
 			var results = _.isObjectStrict(aResponseOp.results) ? aResponseOp.results : _.createObject(response_key,aResponseOp.results); // fix up server mistake
-			var result = results[response_key];
+			var result;
+			if (aResponseOp.verb==='DESTROY')
+				result = undefined;
+			else
+				result = results[response_key];
+
 			results = _.omit(results,response_key); // results now excludes primary result
 			_.extend(this.results,results);   // store other results
 			this.result_key = final_result_key;
@@ -699,7 +729,11 @@ Kojac.Request = Kojac.Object.extend({
 				op.verb = 'CREATE';
 				op.options = _.clone(options);
 				op.params = params && _.clone(params);
-				op.key = keyResource(k);
+				var parts = keySplit(k);
+				if (parts.length >= 3)
+					op.key = k;
+				else
+					op.key = keyResource(k);
 				if ((i===0) && result_key)
 					op.result_key = result_key;
 				op.value = v;
@@ -983,7 +1017,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 	serverPath: null,
 
 	mockWriteOperationHandler: null,//function(aOp) {
-//		console.log(JSON.stringify(CanUtils.copyProperties({},aOp,null,['request'])));
+//		Ember.Logger.log(JSON.stringify(CanUtils.copyProperties({},aOp,null,['request'])));
 //	},
 
 	operationsToJson: function(aOps) {
