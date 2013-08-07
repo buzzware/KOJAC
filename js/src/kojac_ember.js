@@ -284,7 +284,7 @@ Kojac.EmberModel.reopen({
 			var v;
 			for (var p in includes) {
 				v = includes[p];
-				if ((typeof(v)=="object") && ("toObject" in v))
+				if (v && (typeof(v)=="object") && ("toObject" in v))
 					includes[p] = v.toObject();
 			}
 			_.extend(result,includes);
