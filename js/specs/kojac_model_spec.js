@@ -44,7 +44,8 @@ describe("Kojac Model", function() {
 		productId: Int,
 		drawings: Number,
 		holdings: Array,
-		comments: Object
+		comments: Object,
+		content: Null
 	});
 
 	it("write, read and check with correct types", function() {
@@ -54,7 +55,8 @@ describe("Kojac Model", function() {
 			productId: 456,
 			drawings: 3567.88,
 			holdings: [{name: 'this'},{name: 'that'}],
-			comments: {name: 'something else'}
+			comments: {name: 'something else'},
+			content: 123
 		};
 		var curSuper = new CurSuper(values);
 		expect(curSuper.attr()).toEqual(values);
@@ -67,7 +69,8 @@ describe("Kojac Model", function() {
 			productId: '456',
 			drawings: '3567.88',
 			holdings: "something",
-			comments: 'something else'
+			comments: 'something else',
+			content: 'XYZ'
 		};
 		var correctValues = {
 			id: 123,
@@ -75,7 +78,8 @@ describe("Kojac Model", function() {
 			productId: 456,
 			drawings: 3567.88,
 			holdings: null,
-			comments: null
+			comments: null,
+			content: 'XYZ'
 		};
 		var curSuper = new CurSuper(incorrectValues);
 		expect(curSuper.attr()).toEqual(correctValues);

@@ -431,6 +431,33 @@ Ember.computed.modelById = function(aIdProperty,aPrefix,aModelCachePath) {
 	}).property(aModelCachePath,aIdProperty);
 };
 
+Ember.computed.modelByIdVersioned = function(aIdProperty,aVerProperty,aPrefix,aModelCachePath) {
+	if (!aModelCachePath)
+		aModelCachePath = 'App.cache';
+
+	return Ember.computed(aIdProperty, function(){
+		var id = Ember.Handlebars.get(this,aIdProperty);
+		var cache = Ember.Handlebars.get(this,aModelCachePath);
+		if (!id || !cache)
+			return null;
+		var key;
+		var ver = Ember.Handlebars.get(this,aVerProperty);
+		if (ver) {
+			id = [id,ver].join('_');
+			key = keyJoin(aPrefix,id);
+			return Ember.Handlebars.get(cache,key);
+		} else {
+			var versions = _.pickWithPrefix(cache,keyJoin(aPrefix,id)+'_');
+			var v,vi;
+			key = _.max(_.keys(versions), function(k){
+				vi = k.lastIndexOf('_');
+				return Number(k.substr(vi+1));
+			});
+			return key ? versions[key] : null;
+		}
+	}).property(aModelCachePath,aIdProperty,aVerProperty);
+};
+
 
 
 

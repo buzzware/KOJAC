@@ -222,6 +222,9 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 	if (aDestType===sourceType)
 		return aValue;
 	switch (aDestType) {
+		case Null:
+			return aValue;
+			break;
 		case String:
 
 			switch(sourceType) {
