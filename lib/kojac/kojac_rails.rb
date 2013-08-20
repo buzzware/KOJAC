@@ -1,4 +1,4 @@
-require File.expand_path('ring_strong_parameters',File.dirname(__FILE__))
+#require File.expand_path('ring_strong_parameters',File.dirname(__FILE__))
 
 Kernel.class_eval do
   def key_join(aResource,aId=nil,aAssoc=nil)
