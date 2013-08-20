@@ -151,29 +151,29 @@ describe("Kojac Ember Model", function() {
 	});
 
 	it("real world example", function() {
-		var Westcorp = {};
-		Westcorp.FinanceProvider = Kojac.EmberModel.extend({
+		var App = {};
+		App.FinanceProvider = Kojac.EmberModel.extend({
 			id: Int,
 			name: String
 		});
-		Westcorp.FinanceProviders = [
-			Westcorp.FinanceProvider.create({
+		App.FinanceProviders = [
+			App.FinanceProvider.create({
 				id: 1,
 				name: 'GE Automotive'
 			}),
-			Westcorp.FinanceProvider.create({
+			App.FinanceProvider.create({
 				id: 2,
 				name: 'St George Bank'
 			}),
-			Westcorp.FinanceProvider.create({
+			App.FinanceProvider.create({
 				id: 3,
 				name: 'Esanda ANZ'
 			})
 		];
-		expect(Westcorp.FinanceProviders[0].get('id')).toEqual(1);
-		expect(Westcorp.FinanceProviders[0].get('name')).toEqual('GE Automotive');
-		expect(Westcorp.FinanceProviders[1].get('id')).toEqual(2);
-		expect(Westcorp.FinanceProviders[1].get('name')).toEqual('St George Bank');
+		expect(App.FinanceProviders[0].get('id')).toEqual(1);
+		expect(App.FinanceProviders[0].get('name')).toEqual('GE Automotive');
+		expect(App.FinanceProviders[1].get('id')).toEqual(2);
+		expect(App.FinanceProviders[1].get('name')).toEqual('St George Bank');
 	});
 
 });
