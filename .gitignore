@@ -5,3 +5,4 @@ spec/demo/db/*.sqlite3
 spec/demo/log/*.log
 spec/demo/tmp/
 spec/demo/.sass-cache
+/Gemfile.lock
