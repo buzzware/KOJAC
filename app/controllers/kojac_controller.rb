@@ -5,12 +5,16 @@ class KojacController < ApplicationController
 
 	protected
 
+	def kojac_current_user
+		current_user
+	end
+
 	def controller_for_key(aKey)
 		resource = aKey.split('__').first
 		controller_name = resource.camelize+'Controller'
 		if controller = controller_name.constantize
 			result = controller.new
-			result.current_user = self.current_user
+			result.current_user = self.kojac_current_user
 			result
 		else
 			nil
@@ -48,7 +52,7 @@ class KojacController < ApplicationController
       output = process_ops(input)
 			status = :ok
     rescue => e
-			raise e unless Rails.env.production?
+			#raise e unless Rails.env.production?
 			Rails.logger.debug e.message
 			Rails.logger.debug e.backtrace.join("\n")
 	    output = {
@@ -63,7 +67,7 @@ class KojacController < ApplicationController
     #output = ActiveModel::Serializer.new(output,current_user).to_json
     #sz = output.active_model_serializer.new(output)
     #jsons = sz.to_json(:scope => current_user, :root => false)
-    jsons = app_serialize(output,current_user)
+    jsons = app_serialize(output,self.kojac_current_user)
     render json: jsons, status: status
 	end
 

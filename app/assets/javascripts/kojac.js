@@ -1119,6 +1119,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 				}
 			};
 			aRequest.handlers.waitForCallNext = true;
+			// !!! might need to include X-CSRF-Token see http://stackoverflow.com/questions/8511695/rails-render-json-session-lost?rq=1
 			var ajaxpars = {
 				type: 'POST',
 				data: JSON.stringify(dataToSend),

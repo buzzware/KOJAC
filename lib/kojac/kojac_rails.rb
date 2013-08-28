@@ -61,6 +61,9 @@ module KojacUtils
 		aValue
 	end
 
+	def timestamp
+		Time.now.to_i
+	end
 end
 
 module Kojac
@@ -128,6 +131,14 @@ module Kojac
 			self.class.to_s.chomp('Controller').snake_case
 		end
 
+		def kojac_current_user
+			self.current_user
+		end
+
+		def current_ring
+			kojac_current_user.try(:ring).to_i
+		end
+
 		def create_on_association(aItem,aAssoc,aValues,aRing)
 			raise "User does not have permission for create on #{aAssoc}" unless aItem.class.permitted_associations(:create,aRing).include?(aAssoc.to_sym)
 
@@ -173,7 +184,7 @@ module Kojac
 		end
 
 		def create_op
-			ring = current_user.try(:ring)
+			ring = current_ring
 			op = params[:op]
 			options = op[:options] || {}
 			model_class = deduce_model_class
@@ -229,7 +240,7 @@ module Kojac
 		protected
 
 		def merge_model_into_results(aItem,aResultKey=nil,aOptions=nil)
-			ring = current_user.try(:ring)
+			ring = current_ring
 			aResultKey ||= aItem.kojac_key
 			aOptions ||= {}
 			results[aResultKey] = aItem.sanitized_hash(ring)
@@ -286,7 +297,7 @@ module Kojac
 					items = model.by_key(key,op)
 					items.each do |m|
 						item_key = m.kojac_key
-						results[result_key] << item_key.bite(resource+'__')
+						results[result_key] << item_key.split_kojac_key[1]
 						merge_model_into_results(m,item_key,op[:options])
 					end
 				end
@@ -303,7 +314,7 @@ module Kojac
 			result = nil
 			model = deduce_model_class
 
-			ring = current_user.try(:ring)
+			ring = current_ring
 			op = params[:op]
 			result_key = nil
 			if self.item = model.by_key(op[:key],op)
@@ -346,7 +357,7 @@ module Kojac
 		end
 
 		def destroy_op
-			ring = current_user.try(:ring)
+			ring = current_ring
 			op = params[:op]
 			result_key = op[:result_key] || op[:key]
 			item = KojacUtils.model_for_key(op[:key])
@@ -365,7 +376,7 @@ module Kojac
 		#end
 
 		def add_op
-			ring = current_user.try(:ring)
+			ring = current_ring
 			op = params[:op]
 			model = deduce_model_class
 			raise "ADD only supports associated collections at present eg order.items" unless op[:key].index('.')
@@ -398,7 +409,7 @@ module Kojac
 		end
 
 		def remove_op
-			ring = current_user.try(:ring)
+			ring = current_ring
 			op = params[:op]
 			model = deduce_model_class
 			raise "REMOVE only supports associated collections at present eg order.items" unless op[:key].key_assoc
