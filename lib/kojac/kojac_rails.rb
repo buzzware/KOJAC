@@ -74,15 +74,34 @@ module Kojac
 	  end
 
 		module ClassMethods
-			def by_key(aKey,aContext=nil)
+
+			def crack_key(aKey)
 				r,id,a = aKey.split_kojac_key
+				result = {}
+				result[:original] = aKey
+				result[:resource] = r if r
+				result[:id] = id if id
+				result[:association] = a if a
+				result
+			end
+
+			def by_key(aKey,aOperation=nil)
+				key = crack_key(aKey)
+				r = key[:resource]
+				id = key[:id]
+				a = key[:association]
 				model = self
-				model = self.rescope(model,aContext) if self.respond_to? :rescope
+				model = self.rescope(model,aOperation) if self.respond_to? :rescope
 				if id
-					model.where(id: id).first
+					result = model.where(id: id).first
+					result.prepare(key,aOperation) if result.respond_to? :prepare
 				else
-					model.all
+					result = model.all
+					result.each do |item|
+						item.prepare(key,aOperation) if result.respond_to? :prepare
+					end
 				end
+				result
 			end
 		end
 
