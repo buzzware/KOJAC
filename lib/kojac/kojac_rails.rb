@@ -98,7 +98,7 @@ module Kojac
 				else
 					result = model.all
 					result.each do |item|
-						item.prepare(key,aOperation) if result.respond_to? :prepare
+						item.prepare(key,aOperation) if item.respond_to? :prepare
 					end
 				end
 				result
