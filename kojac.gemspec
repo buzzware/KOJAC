@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "jquery-rails"
 
   s.add_development_dependency "rails", ">= 3.1"
+  s.add_development_dependency "active_model_serializers"
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "canjs-rails"
   s.add_development_dependency "ember-rails"
