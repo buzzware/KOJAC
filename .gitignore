@@ -6,3 +6,6 @@ spec/demo/log/*.log
 spec/demo/tmp/
 spec/demo/.sass-cache
 /Gemfile.lock
+.DS_Store
+.idea
+*.iml
