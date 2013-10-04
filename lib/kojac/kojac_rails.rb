@@ -314,10 +314,16 @@ module Kojac
 				results[result_key] = []
 				if model
 					items = model.by_key(key,op)
-					items.each do |m|
-						item_key = m.kojac_key
-						results[result_key] << item_key.split_kojac_key[1]
-						merge_model_into_results(m,item_key,op[:options])
+					if op[:options][:atomise]==false
+						items_json = []
+						items_json = items.map {|i| i.sanitized_hash(ring) }
+						results[result_key] = items_json
+					else
+						items.each do |m|
+							item_key = m.kojac_key
+							results[result_key] << item_key.split_kojac_key[1]
+							merge_model_into_results(m,item_key,op[:options])
+						end
 					end
 				end
 			end

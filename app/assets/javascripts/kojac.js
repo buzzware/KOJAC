@@ -1218,6 +1218,8 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 			var op = aRequest.ops[i];
 			if (op.error)
 				break;
+			if (op.options.atomise===false)
+				continue;
 			for (var k in op.results) {
 				var v = op.results[k];
 				if (!jQuery.isPlainObject(v))

@@ -22,10 +22,9 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   
   s.add_dependency "underscore_plus"
-  s.add_dependency "jquery-rails"
-  s.add_dependency 'strong_parameters'
+  s.add_development_dependency "jquery-rails"
 
-  s.add_development_dependency "rails", "~> 3.2"
+  s.add_development_dependency "rails", ">= 3.1"
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "canjs-rails"
   s.add_development_dependency "ember-rails"
