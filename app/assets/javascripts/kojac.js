@@ -167,27 +167,34 @@ Kojac.Utils = {
 			if (!aPropListFn && !aCopyFn && ("toJsono" in aValue))
 				aValue = aValue.toJsono(aOptions || {});
 			else {
+				var aDest = {};
 				aOptions = _.clone(aOptions);
-				var aProperties = aPropListFn(aValue);    // may return an array of properties, or an object to use the keys from
+				var aProperties = aPropListFn ? aPropListFn(aValue) : aValue;    // may return an array of properties, or an object to use the keys from
 				var aInclude = aOptions && _.removeKey(aOptions,'include'); // must be an array
+				if (_.isString(aInclude))
+					aInclude = aInclude.split(',');
 				if (aInclude && aInclude.length) {
-					if (!_.isArray(aProperties))          //ensure aProperties is an array to add includes
+					if (_.isArray(aProperties))          //ensure aProperties is an array to add includes
+						aProperties = _.clone(aProperties);
+					else
 						aProperties = _.keys(aProperties);
 					for (var i=0;i<aInclude.length;i++)
 						aProperties.push(aInclude[i]);
 				}
 				var aExclude = aOptions &&  _.removeKey(aOptions,'exclude');  // must be an array
+				if (_.isString(aExclude))
+					aExclude = aExclude.split(',');
 				var p;
 				var v;
-				if (_isArray(aProperties)) {
+				if (_.isArray(aProperties)) {
 					for (var i=0;i<aProperties.length;i++) {
 						p = aProperties[i];
 						if (aExclude && aExclude.indexOf(p)>=0)
 							continue;
 						if (aCopyFn)
-							aCopyFn(aDest,aSource,p,aOptions);
+							aCopyFn(aDest,aValue,p,aOptions);
 						else {
-							aDest[p] = Kojac.Utils.toJsono(aSource[p],aOptions);
+							aDest[p] = Kojac.Utils.toJsono(aValue[p],aOptions);
 						}
 					}
 				} else {  // properties is an object to use keys from
@@ -195,9 +202,9 @@ Kojac.Utils = {
 						if (aExclude && aExclude.indexOf(p)>=0)
 							continue;
 						if (aCopyFn)
-							aCopyFn(aDest,aSource,p,aOptions);
+							aCopyFn(aDest,aValue,p,aOptions);
 						else {
-							aDest[p] = Kojac.Utils.toJsono(aSource[p],aOptions);
+							aDest[p] = Kojac.Utils.toJsono(aValue[p],aOptions);
 						}
 					}
 				}
