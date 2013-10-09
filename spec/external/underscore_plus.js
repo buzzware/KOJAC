@@ -1,5 +1,5 @@
 //  underscore_plus.js
-//  (c) 2012 Gary McGhee, Buzzware Solutions
+//  (c) 2013 Gary McGhee, Buzzware Solutions
 //  https://github.com/buzzware/underscore_plus
 //  Underscore may be freely distributed under the MIT license.
 
@@ -115,12 +115,28 @@ _.moveKeys = function(aDest,aSource,aKeys) {
 };
 
 _.removeKey = function(aObject,aKey) {
-	if (!(aKey in aObject))
-		return null;
 	var result = aObject[aKey];
 	delete aObject[aKey];
 	return result;
 };
+
+// for Twitter Typeahead. See http://code.whatcould.com/2013/02/28/underscore-templates-with-twitter-typeahead.html
+_.templateTypeaheadCompatible = {
+  compile: function(str) {
+    return new _.templateTypeaheadCompiled(str);
+  }
+}
+_.templateTypeaheadCompiled = (function() {
+  function templateTypeaheadCompiled(str) {
+    this.compiledTemplate = _.template(str);
+  }
+
+  templateTypeaheadCompiled.prototype.render = function(context) {
+    return this.compiledTemplate(context);
+  };
+
+  return templateTypeaheadCompiled;
+})();
 
 //	// find all dynamic objects in an array that have matching values for the contents of aAndCriteria
 //	public static function ObjectArrayFind(aArray:Array, aAndCriteria:Object):Array {
@@ -204,6 +220,7 @@ _.bite = function(aString, aPrefix) {
 	return (i===0) ? aString.substring(aPrefix.length) : aString;
 }
 
+// undefined null function arguments string number date regexp object
 _.typeOf = function(aSomething) {
 	if (aSomething===undefined)
 		return 'undefined';
@@ -259,5 +276,214 @@ _.clone = function(obj, deep) {
     return isArr ? slice.call(obj) : _.extend({}, obj);
   }
 };
+
+_.randomString = function (aLength, aCharSet) {
+	var result = [];
+
+	aLength = aLength || 5;
+	aCharSet = aCharSet || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	aCharSet = aCharSet.split('');
+
+	while (--aLength) {
+		result.push(aCharSet[Math.floor(Math.random() * aCharSet.length)]);
+	}
+
+	return result.join('');
+};
+
+_.formatNumber = function(aValue,aDecimals) {
+	if (aValue===null)
+		return '';
+	if (!aDecimals && aDecimals!==0)
+		aDecimals = 2;
+	return aValue.toFixed(aDecimals);
+};
+
+_.groupDigits = function(x) {
+	var parts = x.toString().split(".");
+	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	return parts.join(".");
+};
+
+_.sum = function() {
+	var result = NaN;
+	for (var i=0;i<arguments.length;i++) {
+		var v = arguments[i];
+		if (!_.isNumber(v))
+			return NaN;
+		if (i==0)
+			result = 0;
+		result += v;
+	}
+	return result;
+};
+
+	_.formatCurrency = function(aNumber,aPrecision,aSymbol) {
+		if (!aPrecision)
+			aPrecision = 0;
+		if (!aSymbol)
+			aSymbol = '$';
+		return _.isFinite(aNumber) ? aSymbol+_.groupDigits(_.formatNumber(aNumber,aPrecision)) : '';
+	};
+
+_.formatPercent = function(aNumber,aPrecision,aSymbol) {
+	if (!aPrecision)
+		aPrecision = 0;
+	if (!aSymbol)
+		aSymbol = '%';
+	return _.isFinite(aNumber) ? _.groupDigits(_.formatNumber(aNumber*100.0,aPrecision))+aSymbol : '';
+};
+
+_.toNull = function(aValue,aDefault) {
+	if (arguments.length==1)
+		aDefault = null;
+	return ((aValue===null) || (aValue===undefined) || (aValue===[]) || (aValue===0) || (aValue==={}) || _.isNaN(aValue)) ? aDefault : aValue;
+}
+
+_.toFinite = function(aValue) {
+	if (_.isString(aValue))
+		aValue = Number(aValue);
+	return _.isFinite(aValue) ? aValue : 0;
+}
+
+_.toInt = function(aValue,aDefault) {
+	if (arguments.length==1)
+		aDefault = null;
+	var t = _.typeOf(aValue);
+	var result;
+	switch(t) {
+		case 'undefined':
+		case 'null':
+		case 'array':
+		case 'object':
+		case 'function':
+		case 'class':
+		case 'instance':
+		case 'error':
+			result = aDefault;
+			break;
+		case 'number':
+			if (isNaN(aValue))
+				result = aDefault;
+			else
+				result = Math.round(aValue);
+			break;
+		case 'string':
+			result = Math.round(Number(aValue));
+			break;
+		case 'boolean':
+			result = aValue ? 1 : 0;
+			break;
+		default:
+			result = aDefault;
+			break;
+	}
+	return result;
+};
+
+_.toBoolean = function(aValue,aDefault) {
+	if (arguments.length==1)
+		aDefault = false;
+	if (aValue===true || aValue===false)
+		return aValue;
+	if (aValue===0)
+		return false;
+	if (_.isString(aValue)) {
+		var t = Number(aValue);
+		if (_.isFinite(t)) {
+			return !!t;
+		} else {
+			t = aValue.toLowerCase();
+			if (t==="true" || t==="yes" || t==="on")
+				return true;
+			if (t==="false" || t==="no" || t==="off")
+				return false;
+		}
+	}
+	return aDefault;
+};
+
+// converts simple object to array of object with id and name fields
+// eg.
+// _.expand_options({"cash": "Cash","consumer_mortgage": "Consumer Mortgage")
+// => [{id: "cash", name:"Cash"}, {id: "consumer_mortgage",name: "Consumer Mortgage"}]
+// _.expand_options(["cash","consumer_mortgage"])
+// => [{id: "cash", name:"cash"}, {id: "consumer_mortgage",name: "consumer_mortgage"}]
+_.expand_options = function(aObject,aIdField,aNameField) {
+	if (!aIdField)
+		aIdField = 'id';
+	if (!aNameField)
+		aNameField = 'name';
+	if (_.isArray(aObject)) {
+		return _.map(aObject,function(v){
+			var result = {};
+			result[aIdField] = v;
+			result[aNameField] = String(v);
+			return result;
+		});
+	} else {
+		return _.map(aObject,function(v,k){
+			var result = {};
+			result[aIdField] = k;
+			result[aNameField] = v;
+			return result;
+		});
+	}
+};
+
+// returns array of keys on object beginning with aPrefix
+_.keysWithPrefix = function(aObject,aPrefix) {
+	var results = [];
+  var keys = _.keys(aObject);
+  for (var i=0;i<keys.length;i++) {
+	  var k = keys[i];
+	  if (!_.beginsWith(k,aPrefix))
+	    continue;
+	  results.push(k);
+  }
+	return results;
+};
+
+// returns copy of object containing only properties beginning with aPrefix
+_.pickWithPrefix = function(aObject,aPrefix) {
+	var result = {};
+	_.each(aObject,function(v, k){
+		if (!_.beginsWith(k,aPrefix))
+			return;
+    result[k] = v;
+	});
+	return result;
+};
+
+_.round = function(aNumber,aDecimals) {
+	var mult = Math.pow(10, aDecimals);
+	return Math.round(aNumber*mult)/mult;
+};
+
+_.copyProperties = function(aDest,aSource,aProperties,aExclude) {
+	var p;
+	var v;
+	if (!aDest)
+		aDest = {};
+	if (aProperties && !_.isArray(aProperties))
+		aProperties = [aProperties];
+	if (aExclude && !_.isArray(aExclude))
+		aExclude = [aExclude];
+	if (aProperties) {
+		for (var i=0;i<aProperties.length;i++) {
+			p = aProperties[i];
+			if (aExclude && aExclude.indexOf(p)>=0)
+				continue;
+			if (p in aSource) aDest[p] = aSource[p];
+		}
+	} else {
+		for (p in aSource) {
+			if (aExclude && aExclude.indexOf(p)>=0)
+				continue;
+			if (p in aSource) aDest[p] = aSource[p];
+		}
+	}
+	return aDest;
+}
 
 }).call(this);
