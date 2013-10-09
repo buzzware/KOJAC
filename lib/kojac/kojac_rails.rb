@@ -314,9 +314,9 @@ module Kojac
 				results[result_key] = []
 				if model
 					items = model.by_key(key,op)
-					if op[:options][:atomise]==false
+					if op[:options] and op[:options][:atomise]==false
 						items_json = []
-						items_json = items.map {|i| i.sanitized_hash(ring) }
+						items_json = items.map {|i| i.sanitized_hash(current_ring) }
 						results[result_key] = items_json
 					else
 						items.each do |m|

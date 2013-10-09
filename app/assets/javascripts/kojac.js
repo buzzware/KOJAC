@@ -161,14 +161,56 @@ Kojac.Utils = {
 			return null;    // unrecognised input
 	}
 
-	//public static function getTrailingId(aKey: String): int {
-	//	if (!aKey)
-	//		return 0;
-	//	var parts: Array = aKey.split('__')
-	//	if (!parts.length)
-	//		return 0;
-	//	return StringUtils.toInt(parts[parts.length-1])
-	//}
+	// pass a copy aPropListFn aCopyFn when you have a complex object eg. ember class. It will not be passed on to recursive calls
+	toJsono: function(aValue,aOptions,aPropListFn,aCopyFn) {
+		if (_.isObjectStrict(aValue)) {
+			if (!aPropListFn && !aCopyFn && ("toJsono" in aValue))
+				aValue = aValue.toJsono(aOptions || {});
+			else {
+				aOptions = _.clone(aOptions);
+				var aProperties = aPropListFn(aValue);    // may return an array of properties, or an object to use the keys from
+				var aInclude = aOptions && _.removeKey(aOptions,'include'); // must be an array
+				if (aInclude && aInclude.length) {
+					if (!_.isArray(aProperties))          //ensure aProperties is an array to add includes
+						aProperties = _.keys(aProperties);
+					for (var i=0;i<aInclude.length;i++)
+						aProperties.push(aInclude[i]);
+				}
+				var aExclude = aOptions &&  _.removeKey(aOptions,'exclude');  // must be an array
+				var p;
+				var v;
+				if (_isArray(aProperties)) {
+					for (var i=0;i<aProperties.length;i++) {
+						p = aProperties[i];
+						if (aExclude && aExclude.indexOf(p)>=0)
+							continue;
+						if (aCopyFn)
+							aCopyFn(aDest,aSource,p,aOptions);
+						else {
+							aDest[p] = Kojac.Utils.toJsono(aSource[p],aOptions);
+						}
+					}
+				} else {  // properties is an object to use keys from
+					for (p in aProperties) {
+						if (aExclude && aExclude.indexOf(p)>=0)
+							continue;
+						if (aCopyFn)
+							aCopyFn(aDest,aSource,p,aOptions);
+						else {
+							aDest[p] = Kojac.Utils.toJsono(aSource[p],aOptions);
+						}
+					}
+				}
+				aValue = aDest;
+			}
+		} else if (_.isArray(aValue)) {
+			var result = [];
+			for (var i=0; i<aValue.length; i++)
+				result.push(Kojac.Utils.toJsono(aValue[i],aOptions));
+			aValue = result;
+		}
+		return aValue;
+	}
 };
 
 /*
@@ -1032,10 +1074,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 				key: op.key
 			};
 			if ((op.verb==='CREATE') || (op.verb==='UPDATE') || (op.verb==='EXECUTE')) {
-				if (op.value && ("toObject" in op.value))
-					jsonOp.value = op.value.toObject(op.options);
-				else
-					jsonOp.value = op.value;
+				jsonOp.value = Kojac.Utils.toJsono(op.value,op.options);
 			}
 			var options = op.options && _.omit(op.options,['cacheResults','preferCache']);
 			if (options && !_.isEmpty(options))

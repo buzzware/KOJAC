@@ -115,6 +115,8 @@ _.moveKeys = function(aDest,aSource,aKeys) {
 };
 
 _.removeKey = function(aObject,aKey) {
+	if (!(aKey in aObject))
+		return null;
 	var result = aObject[aKey];
 	delete aObject[aKey];
 	return result;

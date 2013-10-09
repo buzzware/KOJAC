@@ -275,23 +275,36 @@ Kojac.EmberModel.reopen({
 		return this.___setProperties(this,values);
 	},
 
-	toObject: function(aOptions) {
-		var result = {};
-		var defs = this.constructor.getDefinitions();
-		var includes = aOptions && aOptions.include
-		for (var p in defs)
-			result[p] = this.get(p);
-		if (includes) {
-			includes = this.getProperties(includes);
-			var v;
-			for (var p in includes) {
-				v = includes[p];
-				if (v && (typeof(v)=="object") && ("toObject" in v))
-					includes[p] = v.toObject();
-			}
-			_.extend(result,includes);
-		}
-		return result;
+	// copy the property from source to dest
+	// this could be a static fn
+	toJsonoCopyFn: function(aDest,aSource,aProperty,aOptions) {
+		Ember.set(aDest,aProperty,Kojac.Utils.toJsono(Ember.get(aSource,aProperty),aOptions));
+	},
+
+	// return array of names, or an object and all keys will be used
+	// this could be a static fn
+	toPropListFn: function(aSource,aOptions) {
+		if ("getDefinitions" in aSource.constructor)
+			return aSource.constructor.getDefinitions();  // return an object to use all keys from
+		else
+			return aSource;    // this is a simple object, so use all keys
+	},
+
+	toJsono: function(aOptions) {
+		return Kojac.Utils.toJsono(this,aOptions,this.toPropListFn,this.toJsonoCopyFn)
+//		for (var p in defs)
+//			result[p] = this.get(p);
+//		if (includes) {
+//			includes = this.getProperties(includes);
+//			var v;
+//			for (var p in includes) {
+//				v = includes[p];
+//				if (v && (typeof(v)=="object") && ("toJsono" in v))
+//					includes[p] = v.toJsono();
+//			}
+//			_.extend(result,includes);
+//		}
+//		return result;
 	}
 
 });
