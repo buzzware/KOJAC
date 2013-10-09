@@ -159,7 +159,7 @@ Kojac.Utils = {
 			return _.flatten(_.pairs(aKeyValues),true); // this style : {key1: value, key2: value}
 		} else
 			return null;    // unrecognised input
-	}
+	},
 
 	// pass a copy aPropListFn aCopyFn when you have a complex object eg. ember class. It will not be passed on to recursive calls
 	toJsono: function(aValue,aOptions,aPropListFn,aCopyFn) {

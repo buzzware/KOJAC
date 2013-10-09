@@ -278,7 +278,7 @@ Kojac.EmberModel.reopen({
 	// copy the property from source to dest
 	// this could be a static fn
 	toJsonoCopyFn: function(aDest,aSource,aProperty,aOptions) {
-		Ember.set(aDest,aProperty,Kojac.Utils.toJsono(Ember.get(aSource,aProperty),aOptions));
+		aDest[aProperty] = Kojac.Utils.toJsono(Ember.get(aSource,aProperty),aOptions);
 	},
 
 	// return array of names, or an object and all keys will be used
