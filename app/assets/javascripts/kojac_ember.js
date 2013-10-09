@@ -72,8 +72,7 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 		var newClass = this.emberClassFromKey(aKey);
 		var result = [];
 		for (var i=0; i<aArray.length; i++) {
-			var newv = new newClass();
-			newv.setProperties(aArray[i]);
+			var newv = newClass.create(aArray[i]);
 			result.push(newv);
 		}
 		return result;
@@ -81,8 +80,7 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 	emberObjectFactory: function(aObject,aKey) {
 		var newClass = this.emberClassFromKey(aKey);
-		var newv = new newClass();
-		newv.setProperties(aObject);
+		var newv = newClass.create(aObject);
 		return newv;
 	},
 
@@ -104,117 +102,75 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 });
 
-
-
-//ExampleRemoteProvider = Ember.Object.extend({
-//Kojac.RemoteProvider = Kojac.Object.extend({
-//
-//	useMockFileValues: false,
-//  mockFilePath: '',
-//	mockReadOperationHandler: null,
-//	mockWriteOperationHandler: function(aOp) {
-//		log.debug(JSON.stringify(EmberUtils.copyProperties({},aOp,null,['request'])));
-//	},
-//
-//	handleOperationFromFiles: function(aRequest) {
-//		var op = aRequest.handlers.parameter;
-//
-//		if (op.verb==='READ' || op.verb==='EXECUTE') {
-//			if (this.mockReadOperationHandler) {
-//				this.mockReadOperationHandler(op);
-//			} else {
-//				aRequest.handlers.waitForCallNext = true;
-//				var fp = mockFilePath+op.key+'.js';
-//				var data = null;
-//				jQuery.ajax({url: fp, dataType: 'json', cache: false, data: data}).done(
-//					function( aData ) {
-//						for (p in aData)
-//							op[p] = aData[p];
-//						aRequest.handlers.callNext();
-//					}
-//				).fail(
-//					function(jqXHR, textStatus) {
-//						aRequest.handlers.handleError(textStatus);
-//					}
-//				);
-//			}
-//		} else {
-//			if (this.mockWriteOperationHandler)
-//				this.mockWriteOperationHandler(op);
-//		}
-//	},
-//
-//	handleAjaxRequest: function(aRequest) {
-//		var op = aRequest.parameter;
-//		aRequest.handlers.waitForCallNext = true;
-//		jQuery.ajax({},function(){
-//			aRequest.handlers.callNext();
-//		})
-//	},
-//
-//	addRequestHandlers: function(aRequest) {
-//		if (this.useMockFileValues) {
-//			for (var i=0;i<aRequest.ops.length;i++)
-//				aRequest.handlers.add(this.handleOperationFromFiles,aRequest.ops[i],this);
-//		} else {
-//			aRequest.handlers.add(this.handleAjaxRequest,null,this);
-//		}
-//	}
-//
-//});
-
-
 Kojac.EmberModel = Ember.Object.extend({});
 
-Kojac.EmberModel.reopenClass({
+Kojac.EmberModel.TypedField = function() {
+  this.get = function(obj,keyName) {    // Here code was copied from Ember get to avoid endless recursion. This is more efficient but brittle for future Ember versions
+	  var meta = Ember.meta(obj),
+		  desc = meta && meta.descs[keyName],
+		  ret;
+	  if (Ember.ENV.MANDATORY_SETTER && meta && meta.watching[keyName] > 0) {
+		  ret = meta.values[keyName];
+	  } else {
+		  ret = obj[keyName];
+	  }
+	  if (ret === undefined &&
+		  'object' === typeof obj && !(keyName in obj) && 'function' === typeof obj.unknownProperty) {
+		  return obj.unknownProperty(keyName);
+	  }
+	  return ret;
+  }
+	this.set = function(obj,keyName,aValue) {   // here we call the standard method after removing the desc to prevent endless recursion, then put it back.
+		var result;
+		var def = obj.constructor.getDefinitions();
+		var t = (def && def[keyName]);
+		if (t)
+			aValue = Kojac.interpretValueAsType(aValue,t);
+		var meta = Ember.meta(obj),
+			desc = meta && meta.descs[keyName];
+		meta.descs[keyName] = undefined;
+		try {
+			result = Ember.set(obj,keyName,aValue);
+		}
+		finally {
+			meta.descs[keyName] = desc;
+		}
+		return result;
+	}
+};
+Kojac.EmberModel.TypedField.prototype = new Ember.Descriptor();
 
-	//_extend: Ember.Object.extend,
+Kojac.EmberModel.reopenClass({
 
 	extend: function() {
 		var defs = arguments[0];
 		var extender = {};
 		var definitions = this.getDefinitions();
 		var defaults = this.getDefaults();
+
 		var _type;
 		var _value;
 		//var _init;
 		if (defs) {
 			for (p in defs) {
 				var pValue = defs[p];
-//				if (p=='init') {
-//					_init = pValue;
-//				} else {
-					if (Kojac.FieldTypes.indexOf(pValue)>=0) { // pValue is field type
-						definitions[p] = pValue;
-						defaults[p] = null;
-						extender[p] = null;
-					} else {
-						var ft=Kojac.getPropertyValueType(pValue);
-						if (ft && (Kojac.SimpleTypes.indexOf(ft)>=0)) {  // pValue is simple field value
-							definitions[p] = ft;
-							defaults[p] = pValue;
-							extender[p] = pValue;
-						} else {  // pValue is something else
-							//definitions[p] = _type;
-							//defaults[p] = _value;
-							extender[p] = pValue;
-						}
+				if (Kojac.FieldTypes.indexOf(pValue)>=0) { // pValue is field type
+					definitions[p] = pValue;
+					defaults[p] = null;
+					extender[p] = null;
+				} else {
+					var ft=Kojac.getPropertyValueType(pValue);
+					if (ft && (Kojac.SimpleTypes.indexOf(ft)>=0)) {  // pValue is simple field value
+						definitions[p] = ft;
+						defaults[p] = pValue;
+						extender[p] = pValue;
+					} else {  // pValue is something else
+						//definitions[p] = _type;
+						//defaults[p] = _value;
+						extender[p] = pValue;
 					}
-	//			}
+				}
 			}
-//			extender.init = function() {  // we need to call the super init, then initialise default values, then call the given init
-//				this._super();
-//				//var defaults = this.constructor.getDefaults();
-//				//for (dp in defaults)
-//				//	this[dp] = defaults[dp];
-//				if (_init) {
-//					var _super = this._super;
-//					this._super = function() {};  // temporarily disable _super to make init function work like normal ember init
-//					_init.call(this);
-//					if (_super)
-//						this._super = _super;       // restore _super
-//				}
-//			};
 		}
 		var result = this._super(extender);
 		result.setDefinitions(definitions);
@@ -238,13 +194,26 @@ Kojac.EmberModel.reopenClass({
 		return this._defaults || {};
 	},
 
+	__addDescs: function(aNewInstance){
+		var meta = Ember.meta(aNewInstance);
+		var defs = this.getDefinitions();
+		if (defs) {
+			for (p in defs) {
+				meta.descs[p] = new Kojac.EmberModel.TypedField(aNewInstance);
+			}
+		}
+	},
+
+
 	__createWithMixins: Kojac.EmberModel.createWithMixins,
 	createWithMixins: function() {
 		var inputs = arguments;
 		if (inputs.length) {
 			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
 		}
-		return this.__createWithMixins.apply(this,inputs);
+		var result = this.__createWithMixins.apply(this,inputs);
+		this.__addDescs(result);
+		return result;
   },
 
 	__create: Kojac.EmberModel.create,
@@ -253,7 +222,9 @@ Kojac.EmberModel.reopenClass({
 		if (inputs.length) {
 			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
 		}
-		return this.__create.apply(this,inputs);
+		var result = this.__create.apply(this,inputs);
+		this.__addDescs(result);
+		return result;
 	}
 
 });
@@ -308,7 +279,6 @@ Kojac.EmberModel.reopen({
 	}
 
 });
-
 
 Kojac.EmberCache = Ember.Object.extend({
 
