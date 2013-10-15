@@ -49,6 +49,15 @@ class RingStrongParameters
 		end
 	end
 
+	def self.ring_name(aRing)
+		ring_names = RingStrongParameters.config[:ring_names]
+		ring_names.key(aRing)
+	end
+
+	def self.ring_text(aRing)
+		return 'none' if !aRing
+		ring_name(aRing).to_s.humanize
+	end
 end
 
 

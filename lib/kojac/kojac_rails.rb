@@ -170,6 +170,7 @@ module Kojac
 				when :belongs_to
 					return nil if !aValues.is_a?(Hash)
 					fields = aValues.permit( *a_model_class.permitted_fields(:write,aRing) )
+					a_model_class.write_op_filter(current_user,fields,aValues) if a_model_class.respond_to? :write_op_filter
 					return aItem.send("build_#{aAssoc}".to_sym,fields)
 				when :has_many
 					aValues = [aValues] if aValues.is_a?(Hash)
@@ -179,6 +180,7 @@ module Kojac
 						new_sub_item = nil
 						case ma.macro
 							when :has_many
+								a_model_class.write_op_filter(current_user,fields,aValues) if a_model_class.respond_to? :write_op_filter
 								new_sub_item = aItem.send(aAssoc.to_sym).create(fields)
 							else
 								raise "#{ma.macro} association unsupported in CREATE"
@@ -221,6 +223,7 @@ module Kojac
 				new_sub_item = nil
 				case ma.macro
 					when :has_many
+						a_model_class.write_op_filter(current_user,fields,a_value) if a_model_class.respond_to? :write_op_filter
 						new_sub_item = item.send(assoc.to_sym).create(fields)
 					else
 						raise "#{ma.macro} association unsupported in CREATE"
@@ -232,6 +235,7 @@ module Kojac
 				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
 
 				p_fields = op[:value].permit( *p_fields )
+				model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
 				item = model_class.create!(p_fields)
 
 				options_include = options['include'] || []
