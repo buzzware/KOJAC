@@ -195,7 +195,7 @@ describe("Kojac Mock", function() {
 		});
 	});
 
-	it("try executing", function() {
+	it("try executing, should not be cached", function() {
 		var op;
 		var req;
 		App.kojac.remoteProvider.mockReadOperationHandler = function(aOp) {
@@ -205,7 +205,7 @@ describe("Kojac Mock", function() {
 			};
 		};
 		runs(function() {
-			req = App.kojac.executeRequest('results',{a: 1,b:2},{cacheResults: true});
+			req = App.kojac.executeRequest('results',{a: 1,b:2});
 			expect(req).toBeDefined('ops');
 			expect(req).toBeDefined('options');
 			expect(req.ops.length).toEqual(1);
@@ -223,7 +223,7 @@ describe("Kojac Mock", function() {
 			expect(op.result_key).toEqual(op.key);
 			expect(typeof(op.results)).toBe('object');
 			expect(op.results.results).toEqual([1,2,3]);
-			expect(App.cache.results).toEqual([1,2,3]);
+			expect(App.cache.results).toBeUndefined();
 		});
 	});
 });

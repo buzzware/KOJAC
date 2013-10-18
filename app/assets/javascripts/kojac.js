@@ -771,7 +771,7 @@ Kojac.Request = Kojac.Object.extend({
 
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
-			var options = aOptions ? _.extend({cacheResults: true},aOptions) : {}; // extract known options
+			var options = _.extend({cacheResults: true},aOptions || {});
 
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
 			for (var i=0;i<kvArray.length-1;i+=2) {
@@ -799,7 +799,7 @@ Kojac.Request = Kojac.Object.extend({
 			var keys = Kojac.Utils.interpretKeys(aKeys);
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');  // extract result_key
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
-			var options = aOptions ? _.extend({cacheResults: true},aOptions) : {}; // extract known options
+			var options = _.extend({cacheResults: true},aOptions || {});
 			var me = this;
 			jQuery.each(keys,function(i,k) {
 				var op = me.newOperation();
@@ -822,7 +822,7 @@ Kojac.Request = Kojac.Object.extend({
 
 		update: function(aKeyValues,aOptions) {
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
-			var options = aOptions ? _.extend({cacheResults: true},aOptions) : {}; // extract known options
+			var options = _.extend({cacheResults: true},aOptions || {});
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
 			var first=true;
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
@@ -847,7 +847,7 @@ Kojac.Request = Kojac.Object.extend({
 		destroy: function(aKeys,aOptions) {
 			var keys = Kojac.Utils.interpretKeys(aKeys);
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
-			var options = aOptions ? _.extend({cacheResults: true},aOptions) : {}; // extract known options
+			var options = _.extend({cacheResults: true},aOptions || {});
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
 			var me = this;
 			jQuery.each(keys,function(i,k) {
@@ -870,7 +870,7 @@ Kojac.Request = Kojac.Object.extend({
 
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
 			op.result_key = aOptions && _.removeKey(aOptions,'result_key') || aKey;
-			op.options = aOptions ? _.extend({cacheResults: false},aOptions) : {}; // extract known options
+			op.options = _.extend({cacheResults: false},aOptions || {});
 			op.params = params && _.clone(params);
 			op.key = aKey;
 			op.value = aValue;
