@@ -470,5 +470,21 @@ module Kojac
 			  results: results
 			}
 		end
+
+		def execute_op
+			op = params[:op]
+			resource,action = op[:key].split_kojac_key
+			raise "action #{action} not implemented on #{resource}" unless respond_to? action.to_sym
+			result = send(action.to_sym,op)
+			result_key = op[:result_key] || op[:key]
+			results = op[:results] || {}             # look at op[:results][result_key]. If empty, fill with returned value from action
+			results[result_key] = result unless results.has_key? result_key
+			{
+				key: op[:key],
+			  verb: op[:verb],
+			  result_key: result_key,
+			  results: results
+			}
+		end
 	end
 end
