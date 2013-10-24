@@ -771,7 +771,7 @@ Kojac.Request = Kojac.Object.extend({
 
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
-			var options = _.extend({cacheResults: true},aOptions || {});
+			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
 
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
 			for (var i=0;i<kvArray.length-1;i+=2) {
@@ -799,7 +799,7 @@ Kojac.Request = Kojac.Object.extend({
 			var keys = Kojac.Utils.interpretKeys(aKeys);
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');  // extract result_key
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
-			var options = _.extend({cacheResults: true},aOptions || {});
+			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
 			var me = this;
 			jQuery.each(keys,function(i,k) {
 				var op = me.newOperation();
@@ -822,7 +822,7 @@ Kojac.Request = Kojac.Object.extend({
 
 		update: function(aKeyValues,aOptions) {
 			var result_key = aOptions && _.removeKey(aOptions,'result_key');
-			var options = _.extend({cacheResults: true},aOptions || {});
+			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
 			var first=true;
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
@@ -870,7 +870,7 @@ Kojac.Request = Kojac.Object.extend({
 
 			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
 			op.result_key = aOptions && _.removeKey(aOptions,'result_key') || aKey;
-			op.options = _.extend({cacheResults: false},aOptions || {});
+			op.options = _.extend({cacheResults: false, manufacture: false},aOptions || {});
 			op.params = params && _.clone(params);
 			op.key = aKey;
 			op.value = aValue;
@@ -1264,7 +1264,7 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 			var op = aRequest.ops[i];
 			if (op.error)
 				break;
-			if (op.options.atomise===false)
+			if ((op.options.atomise===false) || (op.options.manufacture===false))
 				continue;
 			for (var k in op.results) {
 				var v = op.results[k];

@@ -89,7 +89,7 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 			var op = aRequest.ops[i];
 			if (op.error)
 				break;
-			if (op.options.atomise===false)
+			if ((op.options.atomise===false) || (op.options.manufacture===false))
 				continue;
 			for (var k in op.results) {
 				var v = op.results[k];
