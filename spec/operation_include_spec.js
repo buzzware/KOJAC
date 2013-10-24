@@ -49,7 +49,7 @@ describe("Operation include spec", function() {
 			expect(req.options).toEqual({});
 			expect(req.ops.length).toEqual(1);
 			op = req.ops[0];
-			expect(op.options).toEqual({include: 'product', cacheResults: true});
+			expect(op.options).toEqual({include: 'product', cacheResults: true, manufacture : true});
 			expect(op.verb).toEqual('READ');
 			expect(op.key).toEqual('order_item__50');
 			expect(op.result_key).toEqual(op.key);
