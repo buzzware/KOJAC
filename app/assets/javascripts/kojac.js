@@ -249,6 +249,9 @@ Kojac.getPropertyValueType = function(aValue) {
 		case 'object':
 			result = Object;
 			break;
+		case 'date':
+			result = Date;
+			break;
 		case 'function':
 		case 'class':
 		case 'instance':
@@ -282,6 +285,8 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 				case Boolean:
 					return aValue.toString();
 					break;
+				case Date:
+					return moment(aValue).toISOString();
 				default:
 				case Null:
 					return null;
@@ -347,6 +352,20 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 					break;
 			}
 
+			break;
+		case Date:
+			switch(sourceType) {
+				case String:
+					return moment.utc(aValue).toDate();
+					break;
+				case Number:
+					return new Date(aValue);
+					break;
+				case Null:
+				default:
+					return null;
+					break;
+			}
 			break;
 		case Object:
 			return null;

@@ -484,6 +484,24 @@ _.copyProperties = function(aDest,aSource,aProperties,aExclude) {
 		}
 	}
 	return aDest;
-}
+};
+
+
+var formatRegexes = {};
+// format a string
+// Usage: _.format("{0} i{2}a night{1}", "This", "mare", "s ");
+// Could support _.format("{number} {street}, {suburb}", {number: 27, street: "Constant St", suburb: "Highgate"}); - might already
+// see http://stackoverflow.com/questions/2534803/string-format-in-javascript/2534870#2534870
+_.format = function(aFormat, aValues) {
+	var src,v;
+	if (_.isObject(aValues)) {
+		for (p in aValues)
+			aFormat = aFormat.replace(formatRegexes[p] || (formatRegexes[p] = RegExp("\\{" + p + "\\}", "gm")), aValues[p]);
+	} else {
+		for (var args = arguments, i = args.length; --i;)
+	    aFormat = aFormat.replace(formatRegexes[i - 1] || (formatRegexes[i - 1] = RegExp("\\{" + (i - 1) + "\\}", "gm")), args[i]);
+	}
+	return aFormat;
+};
 
 }).call(this);

@@ -4,23 +4,26 @@ describe("Kojac Ember Model", function() {
 		name: String,
 		purchases: Int,
 		weight: Number,
-		isMember: Boolean
+		isMember: Boolean,
+		start: Date
 	};
 	var Product1 = Kojac.EmberModel.extend(product1Values);
 
+	// can only include static values here ie not a Date or other object
 	var product2Values = {
 		name: 'John',
 		purchases: 56,
 		weight: 12.3,
 		isMember: true
-	}
+	};
 	var Product2 = Kojac.EmberModel.extend(product2Values);
 
 	var wrongProductValues = {
 		name: 123,
 		purchases: 2.34,
 		weight: [],
-		isMember: 1
+		isMember: 1,
+		start: "2010-06-01T23:59:56+08:00"
 	};
 
 	it("extend and check null values", function() {
@@ -29,6 +32,7 @@ describe("Kojac Ember Model", function() {
 		expect(product.purchases).toBeNull();
 		expect(product.weight).toBeNull();
 		expect(product.isMember).toBeNull();
+		expect(product.start).toBeNull();
 		expect(Product1.getDefinitions()).toEqual(product1Values);
 	});
 
@@ -79,14 +83,17 @@ describe("Kojac Ember Model", function() {
 	});
 
 	it("check create values requiring conversion", function() {
+		moment().zone(8);
 		var product = Product1.create(wrongProductValues);
 		expect(product.get('name')).toBe('123');
 		expect(product.get('purchases')).toBe(2);
 		expect(product.get('weight')).toBe(null);
 		expect(product.get('isMember')).toBe(true);
+		expect(product.get('start')).toEqual(new Date(2010,5,1,23,59,56));
 	});
 
 	it("check set values requiring conversion", function() {
+		moment().zone(8);
 		var product = Product1.create();
 		for (p in wrongProductValues)
 			product.set(p,wrongProductValues[p]);
@@ -95,15 +102,18 @@ describe("Kojac Ember Model", function() {
 		expect(product.purchases).toBe(2);
 		expect(product.weight).toBe(null);
 		expect(product.isMember).toBe(true);
+		expect(product.start).toEqual(new Date(2010,5,1,23,59,56));
 	});
 
 	it("check setProperties values requiring conversion", function() {
+		moment().zone(8);
 		var product = Product1.create();
 		product.setProperties(wrongProductValues);
 		expect(product.name).toBe('123');
 		expect(product.purchases).toBe(2);
 		expect(product.weight).toBe(null);
 		expect(product.isMember).toBe(true);
+		expect(product.start).toEqual(new Date(2010,5,1,23,59,56));
 	});
 
 	it("check init", function() {
