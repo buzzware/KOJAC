@@ -85,5 +85,21 @@ describe("EmberModel toJsono", function() {
 		var actual = Kojac.Utils.toJsono(input,{include: ['sum']});
 		expect(actual).toEqual({a: 17,b:28,sum:45});
 	});
-		
+
+	it("date toJsono", function() {
+		var actual = Kojac.Utils.toJsono(new Date(2011,0,1));
+		expect(actual).toEqual("2010-12-31T16:00:00.000Z");
+	});
+
+	it("date serialization", function() {
+		var Product = Kojac.EmberModel.extend({
+			dob: Date
+		});
+		var product = Product.create({dob: new Date(2011,0,1)});
+		var jsono = Kojac.Utils.toJsono(product);
+		expect(jsono).toEqual({
+			dob: "2010-12-31T16:00:00.000Z"
+		})
+	});
+
 });

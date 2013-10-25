@@ -215,6 +215,8 @@ Kojac.Utils = {
 			for (var i=0; i<aValue.length; i++)
 				result.push(Kojac.Utils.toJsono(aValue[i],aOptions));
 			aValue = result;
+		} else if (_.isDate(aValue)) {
+			aValue = Kojac.interpretValueAsType(aValue,String);
 		}
 		return aValue;
 	}
