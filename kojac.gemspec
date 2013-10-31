@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   
   s.add_dependency "underscore_plus"
+  s.add_dependency "pundit", '~> 0.2.1'
   s.add_development_dependency "jquery-rails"
 
   s.add_development_dependency "rails", ">= 3.1"

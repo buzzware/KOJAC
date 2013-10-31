@@ -121,6 +121,10 @@ module Kojac
 end
 
 module Kojac
+
+	class NotFoundError < StandardError
+	end
+
 	module ControllerOpMethods
 
 		def self.included(aClass)
@@ -303,10 +307,10 @@ module Kojac
 			result_key = nil
 			resource,id = key.split '__'
 			model = deduce_model_class
-
+			scope = Kojac.policy_scope(current_user, model, op) || model
 			if id   # item
-				if model
-					item = model.by_key(key,op)
+				if scope
+					item = scope.by_key(key,op)
 					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
 					merge_model_into_results(item,result_key,op[:options])
 				else
@@ -316,8 +320,8 @@ module Kojac
 			else    # collection
 				result_key = op[:result_key] || op[:key]
 				results[result_key] = []
-				if model
-					items = model.by_key(key,op)
+				if scope
+					items = scope.by_key(key,op)
 					if op[:options] and op[:options][:atomise]==false
 						items_json = []
 						items_json = items.map {|i| i.sanitized_hash(current_ring) }
@@ -342,11 +346,12 @@ module Kojac
 		def update_op
 			result = nil
 			model = deduce_model_class
+			scope = Kojac.policy_scope(current_user, model, op) || model
 
 			ring = current_ring
 			op = params[:op]
 			result_key = nil
-			if self.item = model.by_key(op[:key],op)
+			if self.item = scope.by_key(op[:key],op)
 
 				run_callbacks :update_op do
 					item.update_permitted_attributes!(op[:value], ring)
