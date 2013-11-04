@@ -345,12 +345,12 @@ module Kojac
 
 		def update_op
 			result = nil
-			model = deduce_model_class
-			scope = Kojac.policy_scope(current_user, model, op) || model
-
 			ring = current_ring
 			op = params[:op]
 			result_key = nil
+			model = deduce_model_class
+			scope = Kojac.policy_scope(current_user, model, op) || model
+
 			if self.item = scope.by_key(op[:key],op)
 
 				run_callbacks :update_op do
