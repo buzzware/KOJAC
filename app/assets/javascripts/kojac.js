@@ -922,6 +922,7 @@ Kojac.Core = Kojac.Object.extend({
 		cacheResults: function(aRequest) {
 			if (this.cache.beginPropertyChanges)
 				this.cache.beginPropertyChanges();
+			var v;
 			for (var i=0;i<aRequest.ops.length;i++) {
 				var op = aRequest.ops[i];
 				if (op.error)
@@ -931,15 +932,19 @@ Kojac.Core = Kojac.Object.extend({
 				for (p in op.results) {
 					if (p==op.result_key)
 						continue;
-					if (op.results[p]===undefined)
+					v = op.results[p];
+					if (v===undefined)
 						delete this.cache[p];
 					else
 						this.cache[p] = op.results[p];
 				}
-				if (op.results[op.result_key]===undefined)
+				v = op.results[op.result_key];
+				if (v===undefined) {
 					delete this.cache[op.result_key];
-				else
-					this.cache[op.result_key] = op.results[op.result_key];
+				} else {
+					this.cache[op.result_key] = v;
+				}
+				console.log('end of loop');
 			}
 			if (this.cache.endPropertyChanges)
 				this.cache.endPropertyChanges();
@@ -1241,7 +1246,7 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 		var pair;
 		var re;
 		var newClass;
-		for (var i = 0; i < this.matchers.length; i++) {
+		if (this.matchers) for (var i = 0; i < this.matchers.length; i++) {
 			pair = this.matchers[i];
 			re = pair[0];
 			if (!re.test(aKey))
@@ -1277,6 +1282,7 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 			var newClass = this.classFromKey(aKey);
 			result = me.createInstance(newClass,aObject);
 		}
+		console.log('END manufacture');
 		return result;
 	},
 
@@ -1294,6 +1300,7 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 				op.results[k] = this.manufacture(v,k);
 			}
 		}
+		console.log('END transformResultsToValueObjects');
 	}
 
 });

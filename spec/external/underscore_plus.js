@@ -256,24 +256,39 @@ _.cloneComplexValues = function (aDestination, aSource) {
 
 _.originalClone = _.originalClone || _.clone;
 // Create a copy (shallow or deep) of an object from https://github.com/cederberg/underscore/commits/feature-clone
-_.clone = function(obj, deep) {
-	if (!deep)
+_.clone = function(obj, deep, ignoreFns) {
+	if (!deep && !ignoreFns)
 		return _.originalClone(obj);
   if (!_.isObject(obj) || _.isFunction(obj)) return obj;
   if (_.isDate(obj)) return new Date(obj.getTime());
   if (_.isRegExp(obj)) return new RegExp(obj.source, obj.toString().replace(/.*\//, ""));
   var isArr = (_.isArray(obj) || _.isArguments(obj));
   if (deep) {
-    var func = function (memo, value, key) {
-      if (isArr)
-        memo.push(_.clone(value, true));
-      else
-        memo[key] = _.clone(value, true);
+    var func = function(memo, value, key) {
+      if (!ignoreFns || !_.isFunction(value)) {
+		    if (isArr)
+	        memo.push(_.clone(value, true));
+	      else
+	        memo[key] = _.clone(value, true);
+      }
       return memo;
     };
     return _.reduce(obj, func, isArr ? [] : {});
   } else {
-    return isArr ? slice.call(obj) : _.extend({}, obj);
+	  var result;
+		if (isArr)
+			result = slice.call(obj);
+	  else {
+			result = {};
+			var v;
+			for (var p in obj) {
+				v = obj[p];
+				if (ignoreFns && _.isFunction(v))
+					continue;
+				result[p] = v;
+      }
+		}
+		return result;
   }
 };
 
@@ -460,6 +475,7 @@ _.round = function(aNumber,aDecimals) {
 	return Math.round(aNumber*mult)/mult;
 };
 
+// copies properties, excluding functions
 _.copyProperties = function(aDest,aSource,aProperties,aExclude) {
 	var p;
 	var v;
@@ -472,15 +488,21 @@ _.copyProperties = function(aDest,aSource,aProperties,aExclude) {
 	if (aProperties) {
 		for (var i=0;i<aProperties.length;i++) {
 			p = aProperties[i];
+			v = aSource[p];
+			if (_.isFunction(v))
+				continue;
 			if (aExclude && aExclude.indexOf(p)>=0)
 				continue;
-			if (p in aSource) aDest[p] = aSource[p];
+			if (p in aSource) aDest[p] = v;
 		}
 	} else {
 		for (p in aSource) {
+			v = aSource[p];
+			if (_.isFunction(v))
+				continue;
 			if (aExclude && aExclude.indexOf(p)>=0)
 				continue;
-			if (p in aSource) aDest[p] = aSource[p];
+			if (p in aSource) aDest[p] = v;
 		}
 	}
 	return aDest;
@@ -502,6 +524,14 @@ _.format = function(aFormat, aValues) {
 	    aFormat = aFormat.replace(formatRegexes[i - 1] || (formatRegexes[i - 1] = RegExp("\\{" + (i - 1) + "\\}", "gm")), args[i]);
 	}
 	return aFormat;
+};
+
+_.randomInt = function(aValues) {
+	return Math.floor(Math.random()*aValues);
+};
+
+_.randomIntRange = function(aMin,aMax) {
+	return aMin + Math.floor(Math.random()*(aMax-aMin+1));
 };
 
 }).call(this);
