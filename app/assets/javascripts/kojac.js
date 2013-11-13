@@ -950,37 +950,46 @@ Kojac.Core = Kojac.Object.extend({
 //				console.log('end of loop');
 //			}
 
-
 		handleResults: function(aRequest) {
-			if (this.objectFactory) {
+			if (this.cache.beginPropertyChanges)
+				this.cache.beginPropertyChanges();
+
+			var updatedObjects = [];
+
+			try {
 				for (var i=0;i<aRequest.ops.length;i++) {
 					var op = aRequest.ops[i];
 					if (op.error)
 						break;
-					if ((op.options.atomise===false) || (op.options.manufacture===false))
-						continue;
-					for (var k in op.results) {
-						var v = op.results[k];
-						if (!jQuery.isPlainObject(v))
-							continue;
-						op.results[k] = this.objectFactory.manufacture(v,k);
+
+					for (var key in op.results) {
+						var value = op.results[key];
+						if ((op.options.atomise!==false) && _.isObjectStrict(value)) {
+							var existing = this.cache.retrieve(key);
+							if (_.isObjectStrict(existing)) {
+								if (existing.beginPropertyChanges) {
+									existing.beginPropertyChanges();
+									updatedObjects.push(existing);
+								}
+								if (existing.setProperties)
+									existing.setProperties(value);
+								else
+									_.copyProperties(existing,value);
+								value = existing;
+							} else {
+								if ((op.options.manufacture!==false) && (this.objectFactory))
+									value = this.objectFactory.manufacture(value,key);
+							}
+						}
+						op.results[key] = value;
+						if (op.options.cacheResults!==false)
+							this.cache.store(key,value);
 					}
 				}
+			} catch(e) {
+				for (var i=0;i<updatedObjects.length;i++)
+					updatedObjects[i].endPropertyChanges();
 			}
-
-			if (this.cache.beginPropertyChanges)
-				this.cache.beginPropertyChanges();
-
-			for (var i=0;i<aRequest.ops.length;i++) {
-				var op = aRequest.ops[i];
-				if (op.error)
-					break;
-				if (op.options.cacheResults===false)
-					continue;
-				for (p in op.results)
-					this.cache.store(p,op.results[p]);
-			}
-
 			if (this.cache.endPropertyChanges)
 				this.cache.endPropertyChanges();
 		},
