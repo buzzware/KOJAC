@@ -925,26 +925,6 @@ Kojac.Core = Kojac.Object.extend({
 			return new Kojac.Request({kojac: this});
 		},
 
-		transformResultsToValueObjects: function(aRequest) {
-			if (this.objectFactory) {
-				for (var i=0;i<aRequest.ops.length;i++) {
-					var op = aRequest.ops[i];
-					if (op.error)
-						break;
-					if ((op.options.atomise===false) || (op.options.manufacture===false))
-						continue;
-					for (var k in op.results) {
-						var v = op.results[k];
-						if (!jQuery.isPlainObject(v))
-							continue;
-						op.results[k] = this.objectFactory.manufacture(v,k);
-					}
-				}
-			}
-
-			if (this.cache.beginPropertyChanges)
-				this.cache.beginPropertyChanges();
-
 //			var v;
 //			for (var i=0;i<aRequest.ops.length;i++) {
 //				var op = aRequest.ops[i];
@@ -970,6 +950,27 @@ Kojac.Core = Kojac.Object.extend({
 //				console.log('end of loop');
 //			}
 
+
+		handleResults: function(aRequest) {
+			if (this.objectFactory) {
+				for (var i=0;i<aRequest.ops.length;i++) {
+					var op = aRequest.ops[i];
+					if (op.error)
+						break;
+					if ((op.options.atomise===false) || (op.options.manufacture===false))
+						continue;
+					for (var k in op.results) {
+						var v = op.results[k];
+						if (!jQuery.isPlainObject(v))
+							continue;
+						op.results[k] = this.objectFactory.manufacture(v,k);
+					}
+				}
+			}
+
+			if (this.cache.beginPropertyChanges)
+				this.cache.beginPropertyChanges();
+
 			for (var i=0;i<aRequest.ops.length;i++) {
 				var op = aRequest.ops[i];
 				if (op.error)
@@ -984,21 +985,7 @@ Kojac.Core = Kojac.Object.extend({
 				this.cache.endPropertyChanges();
 		},
 
-		cacheHasKeys: function(aKeysArray) {
-			var me = this;
-			return _.all(aKeysArray,function(k){
-				return k in me.cache;
-			})
-		},
-
-		cacheValues: function(aKeysArray) {
-			var me = this;
-			return _.map(aKeysArray,function(k){
-				return me.cache[k];
-			})
-		},
-
-		finaliseRequest: function(aRequest) {
+		finaliseResponse: function(aRequest) {
 			// set convenience properties
 			var results = {};
 			for (var i=0;i<aRequest.ops.length;i++) {
@@ -1050,12 +1037,12 @@ Kojac.Core = Kojac.Object.extend({
 					op.performed = true;
 				}
 			}
-			aRequest.handlers.add(this.remoteProvider.handleAjaxRequest,null,this.remoteProvider);
+			aRequest.handlers.add(this.remoteProvider.handleRequest,null,this.remoteProvider);
 
 			//if (this.objectFactory)
-			aRequest.handlers.add(this.transformResultsToValueObjects,null,this);
+			aRequest.handlers.add(this.handleResults,null,this);
 
-			aRequest.handlers.run(aRequest).then(this.finaliseRequest);
+			aRequest.handlers.run(aRequest).then(this.finaliseResponse);
 			return aRequest;
 		},
 
@@ -1166,7 +1153,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 		return result
 	},
 
-	handleAjaxRequest: function(aRequest) {
+	handleRequest: function(aRequest) {
 		var result;
 		var op;
 		for (var i=0;i<aRequest.ops.length;i++) {
@@ -1293,7 +1280,7 @@ Kojac.LocalStorageRemoteProvider = Kojac.Object.extend({
 		return result
 	},
 
-	handleAjaxRequest: function(aRequest) {
+	handleRequest: function(aRequest) {
 		var aRequestOp;
 		if (!aRequest.ops.length)
 			return;

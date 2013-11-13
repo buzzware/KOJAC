@@ -66,22 +66,22 @@ describe("Kojac.CanCache Specs", function() {
 		expect(Kojac.Utils.interpretKeys(['a','b','c'])).toEqual(['a','b','c']);
 	});
 
-	it("kojac.cacheHasKeys", function() {
-		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(false);
-		this.cache.a = 1;
-		expect(this.kojac.cacheHasKeys(['a'])).toBe(true);
-		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(false);
-		this.cache.b = null;
-		this.cache.c = 'hello';
-		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(true);
-	});
-
-	it("kojac.cacheValues", function() {
-		expect(this.kojac.cacheValues(['a','b','c'])).toEqual([undefined,undefined,undefined]);
-		this.cache.a = 1;
-		this.cache.b = null;
-		this.cache.c = 'hello';
-		expect(this.kojac.cacheValues(['a','b','c'])).toEqual([1,null,'hello']);
-	});
+//	it("kojac.cacheHasKeys", function() {
+//		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(false);
+//		this.cache.a = 1;
+//		expect(this.kojac.cacheHasKeys(['a'])).toBe(true);
+//		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(false);
+//		this.cache.b = null;
+//		this.cache.c = 'hello';
+//		expect(this.kojac.cacheHasKeys(['a','b','c'])).toBe(true);
+//	});
+//
+//	it("kojac.cacheValues", function() {
+//		expect(this.kojac.cacheValues(['a','b','c'])).toEqual([undefined,undefined,undefined]);
+//		this.cache.a = 1;
+//		this.cache.b = null;
+//		this.cache.c = 'hello';
+//		expect(this.kojac.cacheValues(['a','b','c'])).toEqual([1,null,'hello']);
+//	});
 
 });
