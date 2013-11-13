@@ -926,22 +926,22 @@ Kojac.Core = Kojac.Object.extend({
 		},
 
 		transformResultsToValueObjects: function(aRequest) {
-			for (var i=0;i<aRequest.ops.length;i++) {
-				var op = aRequest.ops[i];
-				if (op.error)
-					break;
-				if ((op.options.atomise===false) || (op.options.manufacture===false))
-					continue;
-				for (var k in op.results) {
-					var v = op.results[k];
-					if (!jQuery.isPlainObject(v))
+			if (this.objectFactory) {
+				for (var i=0;i<aRequest.ops.length;i++) {
+					var op = aRequest.ops[i];
+					if (op.error)
+						break;
+					if ((op.options.atomise===false) || (op.options.manufacture===false))
 						continue;
-					op.results[k] = this.objectFactory.manufacture(v,k);
+					for (var k in op.results) {
+						var v = op.results[k];
+						if (!jQuery.isPlainObject(v))
+							continue;
+						op.results[k] = this.objectFactory.manufacture(v,k);
+					}
 				}
 			}
-		},
 
-		cacheResults: function(aRequest) {
 			if (this.cache.beginPropertyChanges)
 				this.cache.beginPropertyChanges();
 
@@ -1034,14 +1034,15 @@ Kojac.Core = Kojac.Object.extend({
 			for (var i=0;i<aRequest.ops.length;i++) {
 				var op = aRequest.ops[i];
 				var k = (op.result_key && (op.result_key !== op.key)) ? op.result_key : op.key;
-				if (op.verb=='READ' && op.options.preferCache && (k in aRequest.kojac.cache)) {   // resolve from cache
-					op.results[k] = aRequest.kojac.cache[k];
+				var cacheValue = aRequest.kojac.cache.retrieve(k);
+				if (op.verb=='READ' && op.options.preferCache && (cacheValue!==undefined)) {   // resolve from cache
+					op.results[k] = cacheValue;
 					var dep_keys = aRequest.kojac.dependentKeys[op.key];
 					if (dep_keys) {
 						for (var i=0;i<dep_keys.length;i++) {
 							var dk = dep_keys[i];
 							// what if not in cache? perhaps dump siblings in dependentKeys and index key to cause full refresh? or refuse to remove from cache if in dependentKeys
-							op.results[dk] = aRequest.kojac.cache[dk];
+							op.results[dk] = aRequest.kojac.cache.retrieve(dk);
 						}
 					}
 					op.result_key = k;
@@ -1051,12 +1052,8 @@ Kojac.Core = Kojac.Object.extend({
 			}
 			aRequest.handlers.add(this.remoteProvider.handleAjaxRequest,null,this.remoteProvider);
 
-			if (this.objectFactory)
-				aRequest.handlers.add(this.transformResultsToValueObjects,null,this);
-//			if (this.cache.cacheResults)
-//				aRequest.handlers.add(this.cache.cacheResults,null,this.cache);
-//			else
-			aRequest.handlers.add(this.cacheResults,null,this);
+			//if (this.objectFactory)
+			aRequest.handlers.add(this.transformResultsToValueObjects,null,this);
 
 			aRequest.handlers.run(aRequest).then(this.finaliseRequest);
 			return aRequest;

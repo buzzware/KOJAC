@@ -37,6 +37,7 @@ describe("Kojac Caching", function() {
 		waitsFor(function() { return readReq.isResolved(); }, "request done", 3000);
 		runs(function() {
 			expect(readReq.results).toEqual(products_records);      // should equal normal response
+			expect(this.kojac.cache.products).toEqual(products_records.products)
 			products_server_response = {};                          // kill server response - non-cache reads should return empty now
 			readReq = this.kojac.readRequest('products',{cacheResults: false}); // read from server to check this, and don't store result in cache
 		});
@@ -44,6 +45,7 @@ describe("Kojac Caching", function() {
 		runs(function() {
 			expect(readReq.results).toEqual({});                    // indeed, server now returns empty, but lets try cache
 			readReq = this.kojac.cacheReadRequest('products');      // read from cache
+			console.log('after cacheReadRequest');
 		});
 		waitsFor(function() { return readReq.isResolved(); }, "request done", 3000);
 		runs(function() {
