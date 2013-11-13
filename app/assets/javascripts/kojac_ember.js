@@ -78,26 +78,10 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 		return result;
 	},
 
-	emberObjectFactory: function(aObject,aKey) {
+	manufacture: function(aObject,aKey) {
 		var newClass = this.emberClassFromKey(aKey);
 		var newv = newClass.create(aObject);
 		return newv;
-	},
-
-	transformResultsToValueObjects: function(aRequest) {
-		for (var i=0;i<aRequest.ops.length;i++) {
-			var op = aRequest.ops[i];
-			if (op.error)
-				break;
-			if ((op.options.atomise===false) || (op.options.manufacture===false))
-				continue;
-			for (var k in op.results) {
-				var v = op.results[k];
-				if (!jQuery.isPlainObject(v))
-					continue;
-				op.results[k] = this.emberObjectFactory(v,k);
-			}
-		}
 	}
 
 });
@@ -300,28 +284,17 @@ Kojac.EmberCache = Ember.Object.extend({
 		return id;
 	},
 
-	store: function(aKeysValues) {
-		this.beginPropertyChanges();
-		for (p in aKeysValues) {
-			if (aKeysValues[p]===undefined) {
-				this.set(p,undefined);
-				delete this[p];
-			} else {
-				this.set(p,aKeysValues[p]);
-			}
-		}
-		this.endPropertyChanges();
+	retrieve: function(k) {
+		return this.get(k);
 	},
 
-	cacheResults: function(aRequest) {
+	store: function(k,v) {
 		this.beginPropertyChanges();
-		for (var i=0;i<aRequest.ops.length;i++) {
-			var op = aRequest.ops[i];
-			if (op.error)
-				break;
-			if (op.options.cacheResults===false)
-				continue;
-			this.store(op.results);
+		if (v===undefined) {
+			this.set(k,v);
+			delete this[k];
+		} else {
+			this.set(k,v);
 		}
 		this.endPropertyChanges();
 	},

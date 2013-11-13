@@ -27,7 +27,7 @@ describe("Ember Factory", function() {
 			nothing: null
 		};
 
-		var emberObject = factory.emberObjectFactory(source,'order_item__51');
+		var emberObject = factory.manufacture(source,'order_item__51');
 		expect(emberObject).toBeDefined();
 		expect(emberObject.constructor).toBe(OrderItem);
 		expect(emberObject.id).toBe(source.id);

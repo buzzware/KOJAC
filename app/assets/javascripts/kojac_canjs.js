@@ -122,47 +122,47 @@
 //		return value;
 //	},
 
-	get: function(k) {
+	retrieve: function(k) {
 		return this.attr(k);
 	},
-	set: function(k,v) {
+	store: function(k,v) {
 		return this.attr(k,v);
 	},
 
-	cacheResults: function(aRequest) {
-		console.log('BEGIN cacheResults')
-		var results = {};
-		var deletes = [];
-		for (var i=0;i<aRequest.ops.length;i++) {
-			var op = aRequest.ops[i];
-			if (op.error)
-				break;
-			if (op.options.cacheResults===false)
-				continue;
-			for (p in op.results) {
-				var v = op.results[p];
-				results[p] = v;
-				if (v===undefined)
-					deletes.push(p);
-				else
-					deletes = _.without(deletes, [p]);
-			}
-		}
-		for (p in results) {
-			try {
-				this.attr(p,results[p]);
-			} catch (e) {
-				console.log('Error when caching '+p+' : '+ e.message);
-			}
-		}
-//		if (deletes.length) {
-//			for (var i=0;i<deletes.length;i++) {
-//				console.log('cacheResults remove');
-//				this.removeAttr(deletes[i]);
+//	cacheResults: function(aRequest) {
+//		console.log('BEGIN cacheResults')
+//		var results = {};
+//		var deletes = [];
+//		for (var i=0;i<aRequest.ops.length;i++) {
+//			var op = aRequest.ops[i];
+//			if (op.error)
+//				break;
+//			if (op.options.cacheResults===false)
+//				continue;
+//			for (p in op.results) {
+//				var v = op.results[p];
+//				results[p] = v;
+//				if (v===undefined)
+//					deletes.push(p);
+//				else
+//					deletes = _.without(deletes, [p]);
 //			}
 //		}
-		console.log('END cacheResults');
-	},
+//		for (p in results) {
+//			try {
+//				this.attr(p,results[p]);
+//			} catch (e) {
+//				console.log('Error when caching '+p+' : '+ e.message);
+//			}
+//		}
+////		if (deletes.length) {
+////			for (var i=0;i<deletes.length;i++) {
+////				console.log('cacheResults remove');
+////				this.removeAttr(deletes[i]);
+////			}
+////		}
+//		console.log('END cacheResults');
+//	},
 
 	collectIds: function(aPrefix, aIds) {
 		return Kojac.collectIds(aPrefix,aIds,this);

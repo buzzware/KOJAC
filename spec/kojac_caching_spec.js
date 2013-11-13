@@ -1,7 +1,7 @@
 describe("Kojac Caching", function() {
 
 	beforeEach(function () {
-		this.cache = new Kojac.Object();
+		this.cache = new Kojac.Cache();
 		this.kojac = new Kojac.Core({
 			cache: this.cache,
 			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true,mockFilePath: 'mockjson/'})

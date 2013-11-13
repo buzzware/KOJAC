@@ -15,7 +15,7 @@ describe("LocalStorageRemoteProvider", function() {
 
 	beforeEach(function () {
 		$.jStorage.flush();
-		this.cache = {};
+		this.cache = new Kojac.Cache;
 
 		var factory = new Kojac.ObjectFactory();
 		factory.register([

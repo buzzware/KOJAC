@@ -40,8 +40,8 @@ describe("Kojac.CanCache Specs", function() {
 	});
 
 	it("Expose bug in can.Observe when setting attribute with another can.Observe", function() {
-		var cache = new can.Observe({});
-		var cs1 = new can.Observe({});
+		var cache = new Kojac.CanCache({});
+		var cs1 = new Kojac.CanCache({});
 		var cont1 = {cur_super_43: cs1};
 
 		var cs2 = new can.Observe({});

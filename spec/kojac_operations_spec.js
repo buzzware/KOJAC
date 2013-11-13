@@ -1,7 +1,7 @@
 describe("Kojac Operations", function() {
 
 	beforeEach(function () {
-		this.cache = Ember.Object.create();
+		this.cache = Kojac.EmberCache.create();
 		var factory = new Kojac.ObjectFactory();
 		this.kojac = new Kojac.Core({
 			cache: this.cache,

@@ -13,7 +13,7 @@ describe("Operation include spec", function() {
 	});
 		
 	beforeEach(function () {
-		App.cache = new Kojac.Object();
+		App.cache = new Kojac.Cache();
 		var factory = new Kojac.ObjectFactory();
 		factory.register([
 			[/^order_item(__|$)/,OrderItem],
