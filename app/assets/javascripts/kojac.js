@@ -986,7 +986,7 @@ Kojac.Core = Kojac.Object.extend({
 							this.cache.store(key,value);
 					}
 				}
-			} catch(e) {
+			} finally {
 				for (var i=0;i<updatedObjects.length;i++)
 					updatedObjects[i].endPropertyChanges();
 			}
