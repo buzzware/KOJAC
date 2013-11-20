@@ -303,21 +303,7 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 
 			break;
 		case Boolean:
-
-			switch(sourceType) {
-				case Null:
-				default:
-					return null;
-					break;
-				case Int:
-				case Number:
-					if (isNaN(aValue))
-						return null;
-					else
-						return !!aValue;
-					break;
-			}
-
+			return _.toBoolean(aValue,null);
 			break;
 
 		case Number:
