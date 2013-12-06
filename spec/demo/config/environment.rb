@@ -1,7 +1,7 @@
-# Load the rails application
+# Load the Rails application.
 require File.expand_path('../application', __FILE__)
 
-ActiveRecord::Base.logger=Logger.new($stdout) if CONFIG[:force_debug] or Rails.env!="production" && CONFIG[:log_db_to_stdout]!=false
+ActiveRecord::Base.logger=Logger.new($stdout) if CONFIG[:log_db_to_stdout]==true
 
-# Initialize the rails application
+# Initialize the Rails application.
 Demo::Application.initialize!
