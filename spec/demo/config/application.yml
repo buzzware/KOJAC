@@ -1,0 +1,4 @@
+log_db_to_stdout: true
+force_debug: true
+dont_send_real_emails: true
+host: localhost

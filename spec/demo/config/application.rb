@@ -4,7 +4,17 @@ require 'rails/all'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
+Dir[File.expand_path('../../lib/*.rb', __FILE__)].each do |f|
+	require f
+end
 Bundler.require(:default, Rails.env)
+
+if appyml = YAML.load(File.read(File.expand_path('../application.yml', __FILE__))) rescue nil
+	appyml.merge! appyml.fetch(Rails.env, {})
+	CONFIG = appyml.symbolize_keys
+else
+	CONFIG = {}
+end
 
 module Demo
   class Application < Rails::Application
