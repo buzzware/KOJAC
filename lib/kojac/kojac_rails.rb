@@ -479,6 +479,8 @@ module Kojac
 		def execute_op
 			op = params[:op]
 			resource,action = op[:key].split_kojac_key
+			raise "action not given" unless action.is_a? String
+			action = "execute_#{action}"
 			raise "action #{action} not implemented on #{resource}" unless respond_to? action.to_sym
 			result = send(action.to_sym,op)
 			result_key = op[:result_key] || op[:key]
