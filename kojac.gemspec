@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
   
+  s.add_dependency "buzztools"
   s.add_dependency "underscore_plus"
   s.add_dependency "pundit", '~> 0.2.1'
   s.add_development_dependency "jquery-rails"

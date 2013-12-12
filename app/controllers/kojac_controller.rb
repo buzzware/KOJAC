@@ -52,7 +52,7 @@ class KojacController < ApplicationController
       output = process_ops(input)
 			status = :ok
     rescue => e
-			#raise e unless Rails.env.production?
+			raise e unless Rails.env.production?
 			Rails.logger.debug e.message
 			Rails.logger.debug e.backtrace.join("\n")
 	    output = {
