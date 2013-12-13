@@ -130,4 +130,4 @@ end
 #end
 #ActiveRecord::Base.shared_connection = ActiveRecord::Base.connection
 #
-#require 'spec_utils'
+require 'spec_utils'

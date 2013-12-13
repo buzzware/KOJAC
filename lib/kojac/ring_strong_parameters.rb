@@ -66,8 +66,6 @@ end
 module RingStrongParameters::Model
 
 	def self.included(aClass)
-		aClass.cattr_accessor :rings_fields
-    aClass.rings_fields = []  # [1] => {read: [:name,:address], delete: true}
 		aClass.cattr_accessor :rings_abilities
     aClass.rings_abilities = []  # [1] => {read: [:name,:address], delete: true}
     aClass.send :extend, ClassMethods
@@ -87,42 +85,43 @@ module RingStrongParameters::Model
 		def ring(aRing,aAbilities)
 			aRing = RingStrongParameters.lookup_ring(aRing)
 			raise "aRing must be a number or a symbol defined in RingStrongParameters.config.ring_names" if !aRing.is_a?(Fixnum)
+			raise "aAbilities must be a Hash" unless aAbilities.is_a? Hash # eg. :write => [:name,:address]
 
-			if aAbilities.is_a? Hash    # eg. fields like :write => [:name,:address]
-				ring_rec = self.rings_fields[aRing] || {}
+			ring_rec = self.rings_abilities[aRing]
 				aAbilities.each do |abilities,fields|
 					abilities = [abilities] unless abilities.is_a?(Array)
 					fields = [fields] unless fields.is_a?(Array)
+				next if fields.empty?
 					abilities.each do |a|
 						a = a.to_sym
-						ring_fields = ring_rec[a] || []
+					ring_rec ||= {}
+					if fields==[:this]
+						ring_rec[a] = true unless ring_rec[a].to_nil
+					else
+						ring_fields = ring_rec[a]
+						ring_fields = [] unless ring_fields.is_a? Array
 						ring_fields = ring_fields + fields.map(&:to_sym)
 						ring_fields.uniq!
 						ring_fields.sort!
 						ring_rec[a] = ring_fields
 					end
 				end
-				self.rings_fields[aRing] = ring_rec
-			elsif aAbilities.is_a?(Array) || aAbilities.is_a?(Symbol)   # eg. abilities like :sales, [:read, :create, :destroy]
-				aAbilities = [aAbilities] unless aAbilities.is_a?(Array)
-				ring_ab = self.rings_abilities[aRing] || []
-				aAbilities.each do |ability|
-					ring_ab << ability.to_sym
-				end
-				ring_ab.uniq!
-				ring_ab.sort!
-				self.rings_abilities[aRing] = ring_ab
+				self.rings_abilities[aRing] = ring_rec
 			end
 		end
 
+		# returns properties that this ring can use this ability on
+		# !!! should reverse order of parameters
 		def permitted(aAbility,aRing)
 			aRing = RingStrongParameters.lookup_ring(aRing)
-			return [] unless aRing and rings_fields = self.respond_to?(:rings_fields).to_nil && self.rings_fields
+			raise "aRing must be a number or a symbol defined in RingStrongParameters.config.ring_names" if !aRing.is_a?(Fixnum)
+			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities) && self.rings_abilities.to_nil
 
 			fields = []
-			aRing.upto(rings_fields.length-1) do |i|
-				next unless ring_rec = rings_fields[i]
+			aRing.upto(rings_abilities.length-1) do |i|
+				next unless ring_rec = rings_abilities[i]
 				if af = ring_rec[aAbility.to_sym]
+					next if af==true
 					fields += af if af.is_a?(Array)
 				end
 			end
@@ -131,38 +130,37 @@ module RingStrongParameters::Model
 			fields
 		end
 
+		# !!! should reverse order of parameters
 		def permitted_fields(aAbility, aRing)
 			result = self.permitted(aAbility, aRing)
 			result.delete_if { |f| self.reflections.has_key? f }
 			result
 		end
 
+		# !!! should reverse order of parameters
 		def permitted_associations(aAbility, aRing)
-			aRing = RingStrongParameters.lookup_ring(aRing)
-			return [] unless aRing and rings_fields = self.respond_to?(:rings_fields).to_nil && self.rings_fields
-
-			associations = self.reflections.keys
-
-			fields = []
-			aRing.upto(rings_fields.length-1) do |i|
-				next unless ring_rec = rings_fields[i]
-				if af = ring_rec[aAbility.to_sym]
-					fields += associations & af
-				end
-			end
-			fields.uniq!
-			fields.sort!
-			fields
+			result = self.permitted(aAbility, aRing)
+			result.delete_if { |f| !self.reflections.has_key?(f) }
+			result
 		end
 
-		def ring_can?(aAbility, aRing)
+		# Query
+		def ring_can?(aRing,aAbility,aFields=nil)
+			if aFields
+				pf = permitted(aAbility,aRing)
+				if aFields.is_a? Array
+					return (aFields - pf).empty?
+				else
+					return pf.include? aFields
+				end
+			end
+
 			aRing = RingStrongParameters.lookup_ring(aRing)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities).to_nil && self.rings_abilities
 
-			fields = []
 			aRing.upto(rings_abilities.length-1) do |i|
-				next unless ring_ab = rings_abilities[i]
-				return true if ring_ab.include?(aAbility)
+				next unless ring_rec = rings_abilities[i]
+				return true if ring_rec[aAbility.to_sym].to_nil
 			end
 			return false
 		end
@@ -170,35 +168,4 @@ module RingStrongParameters::Model
 	end
 
 end
-
-#module RingStrongParameters::Controller
-#
-#	#def permitted(aAbility,aModel)
-#	#	# lookup aModel.rings_fields and return fields that current_user can access with given ability
-#	#	aModel = aModel.class if aModel.is_a? ActiveRecord::Base
-#	#	ring = current_user.try(:ring)
-#	#	aModel.permitted(aAbility,ring)
-#	#end
-#
-#	#def permitted_fields(aAbility,aModel)
-#	#	aModel = aModel.class if aModel.is_a? ActiveRecord::Base
-#	#	ring = current_user.try(:ring)
-#	#	aModel.permitted_fields(aAbility,ring)
-#	#end
-#
-#	#def permitted_associations(aAbility,aModel)
-#	#	aUser = current_user
-#	#	aRing = aUser.try(:ring)
-#	#	aModel = aModel.class if aModel.is_a? ActiveRecord::Base
-#	#	aModel.permitted_associations(aAbility, aRing)
-#	#end
-#
-#	#def ring_can?(aAbility,aModel)
-#	#	aModel = aModel.class if aModel.is_a? ActiveRecord::Base
-#	#	aAbility = aAbility.to_sym
-#	#	ring = current_user.try(:ring)
-#	#	aModel.ring_can?(aAbility, ring)
-#	#end
-#
-#end
 

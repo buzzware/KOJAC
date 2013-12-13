@@ -3,11 +3,7 @@ class User < ActiveRecord::Base
 	include RingStrongParameters::Model
 	include ::Kojac::ModelMethods
 
-	ADMIN_FIELDS = [
-    :ring
-  ]
-
-	DETAILS_FIELDS = [
+	PUBLIC_FIELDS = [
 		:email,
 		:first_name,
 		:middle_names,
@@ -15,14 +11,26 @@ class User < ActiveRecord::Base
 		:dob
 	]
 
-  INTERNAL_FIELDS = [
-    :id,
-    :created_at,
-    :updated_at
-  ]
+	PROTECTED_FIELDS = [
+		:ring
+	]
 
- 	ALL_FIELDS = ADMIN_FIELDS + DETAILS_FIELDS + INTERNAL_FIELDS
+	READ_ONLY_FIELDS = [
+		:id
+	]
 
-	ring :sales, :read => ALL_FIELDS
+	INTERNAL_FIELDS = [
+		:created_at,
+		:updated_at
+	]
+
+ 	ALL_FIELDS = PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS + INTERNAL_FIELDS
+	READABLE_FIELDS = PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS
+
+	ring :user, :read => PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS
+	ring :user, :write => PUBLIC_FIELDS
+
+	ring :admin, :read => INTERNAL_FIELDS
+	ring :admin, :write => PROTECTED_FIELDS
 
 end
