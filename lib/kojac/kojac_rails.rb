@@ -103,6 +103,10 @@ module Kojac
 				end
 				result
 			end
+
+			def policy_class
+				"#{self}Policy".safe_constantize || KojacPolicy
+			end
 		end
 
 		def kojac_key
@@ -113,7 +117,11 @@ module Kojac
 			aChanges = KojacUtils.upgrade_hashes_to_params(aChanges)
 			permitted_fields = self.class.permitted_fields(:write, aRing)
 			permitted_fields = aChanges.permit(*permitted_fields)
-			assign_attributes(permitted_fields, :without_protection => true)
+			if ::Rails::VERSION::MAJOR <= 3
+				assign_attributes(permitted_fields, :without_protection => true)
+			else
+				assign_attributes(permitted_fields)
+			end
 			save!
 		end
 
@@ -163,7 +171,7 @@ module Kojac
 		end
 
 		def create_on_association(aItem,aAssoc,aValues,aRing)
-			raise "User does not have permission for create on #{aAssoc}" unless aItem.class.permitted_associations(:create,aRing).include?(aAssoc.to_sym)
+			raise "User does not have permission for create on #{aAssoc}" unless aItem.class.ring_can?(aRing,:create_on,aAssoc.to_sym) # permitted_associations(:create_on,aRing).include?(aAssoc.to_sym)
 
 			return nil unless ma = aItem.class.reflect_on_association(aAssoc.to_sym)
 			a_model_class = ma.klass
@@ -215,7 +223,7 @@ module Kojac
 			model_class = deduce_model_class
 			resource,id,assoc = op['key'].split_kojac_key
 			if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
-				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}" unless model_class.permitted_associations(:create,ring).include?(assoc.to_sym)
+				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}" unless model_class.ring_can?(ring,:create_on,assoc.to_sym) #   .permitted_associations(:create_on,ring).include?(assoc.to_sym)
 				item = KojacUtils.model_for_key(key_join(resource,id))
 				ma = model_class.reflect_on_association(assoc.to_sym)
 				a_value = op[:value]        # get data for this association, assume {}
@@ -275,7 +283,7 @@ module Kojac
 				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
 				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
 				included_assocs.map!(&:to_sym) if included_assocs.is_a?(Array)
-				p_assocs = aItem.class.permitted_associations(:read,ring)
+				p_assocs = aItem.class.permitted_associations(:read,ring)       # ***
 				use_assocs = p_assocs.delete_if do |a|
 					if included_assocs.include?(a) and ma = aItem.class.reflect_on_association(a)
 						![:belongs_to,:has_many].include?(ma.macro)   # is supported association type
@@ -363,10 +371,6 @@ module Kojac
 						case assoc.macro
 							when :belongs_to
 								if leaf = (item.send(k) || item.send("build_#{k}".to_sym))
-									#permitted_fields = leaf.class.permitted_fields(:write,ring)
-									#permitted_fields = op[:value][k].permit( *permitted_fields )
-									#leaf.assign_attributes(permitted_fields, :without_protection => true)
-									#leaf.save!
 									leaf.update_permitted_attributes!(op[:value][k], ring)
 								end
 						end
