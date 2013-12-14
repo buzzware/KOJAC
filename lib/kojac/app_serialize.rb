@@ -1,3 +1,5 @@
+# http://matthewrobertson.org/blog/2013/08/06/active-record-serializers-from-scratch/
+
 if Rails::VERSION::STRING.split('.').first.to_i < 4
 	require 'active_record/serializer_override'
 end

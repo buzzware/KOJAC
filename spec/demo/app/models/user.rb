@@ -1,6 +1,6 @@
 class User < ActiveRecord::Base
 
-	include RingStrongParameters::Model
+	include Concentric::Model
 	include ::Kojac::ModelMethods
 
 	PUBLIC_FIELDS = [

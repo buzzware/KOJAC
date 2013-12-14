@@ -1,4 +1,4 @@
-#ring_strong_parameters
+#concentric
 #
 #Assists implementation of ring level security (http://en.wikipedia.org/wiki/Ring_(computer_security)) with Rails 4 (or Rails 3 with gem) Strong Parameters.
 #
@@ -35,14 +35,14 @@
 
 
 
-class RingStrongParameters
+class Concentric
 
 	cattr_accessor :config
 
 	def self.lookup_ring(aRingName)
 		return nil if !aRingName
 		return aRingName if aRingName.is_a?(Fixnum)
-		if ring_names = RingStrongParameters.config[:ring_names]
+		if ring_names = Concentric.config[:ring_names]
 			return ring_names[aRingName.to_sym]
 		else
 			return nil
@@ -50,7 +50,7 @@ class RingStrongParameters
 	end
 
 	def self.ring_name(aRing)
-		ring_names = RingStrongParameters.config[:ring_names]
+		ring_names = Concentric.config[:ring_names]
 		ring_names.key(aRing)
 	end
 
@@ -63,7 +63,7 @@ end
 
 # see http://yehudakatz.com/2009/11/12/better-ruby-idioms/ re class and instance methods and modules
 
-module RingStrongParameters::Model
+module Concentric::Model
 
 	def self.included(aClass)
 		aClass.cattr_accessor :rings_abilities
@@ -83,8 +83,8 @@ module RingStrongParameters::Model
 		# ring :sales, :read                        ie. sales can read this model
 		# ring :sales, [:read, :create, :destroy]   ie. sales can read, create and destroy this model
 		def ring(aRing,aAbilities)
-			aRing = RingStrongParameters.lookup_ring(aRing)
-			raise "aRing must be a number or a symbol defined in RingStrongParameters.config.ring_names" if !aRing.is_a?(Fixnum)
+			aRing = Concentric.lookup_ring(aRing)
+			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
 			raise "aAbilities must be a Hash" unless aAbilities.is_a? Hash # eg. :write => [:name,:address]
 
 			ring_rec = self.rings_abilities[aRing]
@@ -113,8 +113,8 @@ module RingStrongParameters::Model
 		# returns properties that this ring can use this ability on
 		# !!! should reverse order of parameters
 		def permitted(aAbility,aRing)
-			aRing = RingStrongParameters.lookup_ring(aRing)
-			raise "aRing must be a number or a symbol defined in RingStrongParameters.config.ring_names" if !aRing.is_a?(Fixnum)
+			aRing = Concentric.lookup_ring(aRing)
+			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities) && self.rings_abilities.to_nil
 
 			fields = []
@@ -155,7 +155,7 @@ module RingStrongParameters::Model
 				end
 			end
 
-			aRing = RingStrongParameters.lookup_ring(aRing)
+			aRing = Concentric.lookup_ring(aRing)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities).to_nil && self.rings_abilities
 
 			aRing.upto(rings_abilities.length-1) do |i|

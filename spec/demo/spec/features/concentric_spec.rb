@@ -3,8 +3,8 @@ require 'spec_helper'
 describe "ConcentricTestModel" do
 
 	before(:all) do
-		@original_config = RingStrongParameters.config
-		RingStrongParameters.config = {
+		@original_config = Concentric.config
+		Concentric.config = {
 			ring_names: {
 				master: 0,
 				boss: 10,
@@ -15,12 +15,12 @@ describe "ConcentricTestModel" do
 	end
 
 	after(:all) do
-		RingStrongParameters.config = @original_config
+		Concentric.config = @original_config
 	end
 
 	it "attributes described should be available in outer rings" do
 		class ConcentricTestModel < ActiveRecord::Base
-			include RingStrongParameters::Model
+			include Concentric::Model
 
 			ring :pleb, read: [:name,:address]
 			ring :pleb, read: [:dob]
