@@ -1,4 +1,4 @@
-class KojacController < ApplicationController
+class KojacBaseController < ApplicationController
 
 	respond_to :json
 	protect_from_forgery :only => []
@@ -55,6 +55,7 @@ class KojacController < ApplicationController
 			raise e unless Rails.env.production?
 			Rails.logger.debug e.message
 			Rails.logger.debug e.backtrace.join("\n")
+			handle_exception(e) if respond_to? :handle_exception
 	    output = {
 		    results: nil,
 	      errors: [{

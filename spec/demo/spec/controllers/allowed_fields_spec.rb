@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe KojacController do
+describe KojacBaseController do
 
 	#before(:each) do
 	#	#@user = FactoryGirl.create(:user, ring: 3)
