@@ -113,7 +113,7 @@ module Kojac
 
 		def update_permitted_attributes!(aChanges, aRing)
 			aChanges = KojacUtils.upgrade_hashes_to_params(aChanges)
-			permitted_fields = self.class.permitted_fields(:write, aRing)
+			permitted_fields = self.class.permitted_fields(aRing,:write)
 			permitted_fields = aChanges.permit(*permitted_fields)
 			if ::Rails::VERSION::MAJOR <= 3
 				assign_attributes(permitted_fields, :without_protection => true)
@@ -179,14 +179,14 @@ module Kojac
 			case ma.macro
 				when :belongs_to
 					return nil if !aValues.is_a?(Hash)
-					fields = aValues.permit( *a_model_class.permitted_fields(:write,aRing) )
+					fields = aValues.permit( *a_model_class.permitted_fields(aRing,:write) )
 					a_model_class.write_op_filter(current_user,fields,aValues) if a_model_class.respond_to? :write_op_filter
 					return aItem.send("build_#{aAssoc}".to_sym,fields)
 				when :has_many
 					aValues = [aValues] if aValues.is_a?(Hash)
 					return nil unless aValues.is_a? Array
 					aValues.each do |v|
-						fields = v.permit( *a_model_class.permitted_fields(:write,aRing) )
+						fields = v.permit( *a_model_class.permitted_fields(aRing,:write) )
 						new_sub_item = nil
 						case ma.macro
 							when :has_many
@@ -228,7 +228,7 @@ module Kojac
 				raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
 
 				a_model_class = ma.klass
-				p_fields = a_model_class.permitted_fields(:write,ring)
+				p_fields = a_model_class.permitted_fields(ring,:write)
 				fields = a_value.permit( *p_fields )
 				new_sub_item = nil
 				case ma.macro
@@ -241,7 +241,7 @@ module Kojac
 				result_key = op[:result_key] || new_sub_item.kojac_key
 				merge_model_into_results(new_sub_item)
 			else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
-				p_fields = model_class.permitted_fields(:write,ring)
+				p_fields = model_class.permitted_fields(ring,:write)
 				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
 
 				p_fields = op[:value].permit( *p_fields )
@@ -250,7 +250,7 @@ module Kojac
 
 				options_include = options['include'] || []
 				included_assocs = []
-				p_assocs = model_class.permitted_associations(:write,ring)
+				p_assocs = model_class.permitted_associations(ring,:write)
 				if p_assocs
 					p_assocs.each do |a|
 						next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
@@ -281,7 +281,7 @@ module Kojac
 				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
 				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
 				included_assocs.map!(&:to_sym) if included_assocs.is_a?(Array)
-				p_assocs = aItem.class.permitted_associations(:read,ring)       # ***
+				p_assocs = aItem.class.permitted_associations(ring,:read)       # ***
 				use_assocs = p_assocs.delete_if do |a|
 					if included_assocs.include?(a) and ma = aItem.class.reflect_on_association(a)
 						![:belongs_to,:has_many].include?(ma.macro)   # is supported association type
@@ -362,7 +362,7 @@ module Kojac
 				run_callbacks :update_op do
 					item.update_permitted_attributes!(op[:value], ring)
 
-					associations = model.permitted_associations(:write,ring)
+					associations = model.permitted_associations(ring,:write)
 					associations.each do |k|
 						next unless assoc = model.reflect_on_association(k)
 						next unless op[:value][k]

@@ -32,9 +32,9 @@ describe "ConcentricTestModel" do
 			ring :pleb, [:cough,:sneeze] => [:desk,:outside]
 		end
 
-		ConcentricTestModel.permitted(:read,:pleb).should == [:address,:dob,:name]
-		ConcentricTestModel.permitted(:read,:master).should == [:address,:dob,:name,:next_of_kin]
-		ConcentricTestModel.permitted(:read,:anyone).should == []
+		ConcentricTestModel.permitted(:pleb,:read).should == [:address,:dob,:name]
+		ConcentricTestModel.permitted(:master,:read).should == [:address,:dob,:name,:next_of_kin]
+		ConcentricTestModel.permitted(:anyone,:read).should == []
 		ConcentricTestModel.ring_can?(:pleb,:read).should == true
 		ConcentricTestModel.ring_can?(:master,:read).should == true
 		ConcentricTestModel.ring_can?(:anyone,:read).should == false
@@ -56,8 +56,8 @@ describe "ConcentricTestModel" do
 		ConcentricTestModel.ring_can?(:pleb,:cough,[:desk,:outside]).should == true
 		ConcentricTestModel.ring_can?(:pleb,:cough,:lunch_room).should == false
 
-		ConcentricTestModel.permitted(:cough,:pleb).should == [:desk,:outside]
-		ConcentricTestModel.permitted(:sneeze,:pleb).should == [:desk,:outside]
+		ConcentricTestModel.permitted(:pleb,:cough).should == [:desk,:outside]
+		ConcentricTestModel.permitted(:pleb,:sneeze).should == [:desk,:outside]
 	end
 
 end

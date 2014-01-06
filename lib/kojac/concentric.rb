@@ -72,7 +72,7 @@ module Concentric::Model
   end
 
 	def sanitized_hash(aRing)
-		p_fields = self.class.permitted_fields(:read, aRing)
+		p_fields = self.class.permitted_fields(aRing,:read)
 		self.attributes.filter_include(p_fields)
 	end
 
@@ -112,7 +112,7 @@ module Concentric::Model
 
 		# returns properties that this ring can use this ability on
 		# !!! should reverse order of parameters
-		def permitted(aAbility,aRing)
+		def permitted(aRing,aAbility)
 			aRing = Concentric.lookup_ring(aRing)
 			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities) && self.rings_abilities.to_nil
@@ -131,15 +131,15 @@ module Concentric::Model
 		end
 
 		# !!! should reverse order of parameters
-		def permitted_fields(aAbility, aRing)
-			result = self.permitted(aAbility, aRing)
+		def permitted_fields(aRing,aAbility)
+			result = self.permitted(aRing,aAbility)
 			result.delete_if { |f| self.reflections.has_key? f }
 			result
 		end
 
 		# !!! should reverse order of parameters
-		def permitted_associations(aAbility, aRing)
-			result = self.permitted(aAbility, aRing)
+		def permitted_associations(aRing,aAbility)
+			result = self.permitted(aRing,aAbility)
 			result.delete_if { |f| !self.reflections.has_key?(f) }
 			result
 		end
@@ -147,7 +147,7 @@ module Concentric::Model
 		# Query
 		def ring_can?(aRing,aAbility,aFields=nil)
 			if aFields
-				pf = permitted(aAbility,aRing)
+				pf = permitted(aRing,aAbility)
 				if aFields.is_a? Array
 					return (aFields - pf).empty?
 				else

@@ -84,7 +84,7 @@ class KojacPolicy
 			when 'CREATE_ON'
 				:create_on
 		end
-		record.class.permitted(ability,user.ring)
+		record.class.permitted(user.ring,ability)
 	end
 end
 
