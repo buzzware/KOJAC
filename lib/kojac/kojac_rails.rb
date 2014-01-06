@@ -103,7 +103,7 @@ module Kojac
 			end
 
 			def policy_class
-				"#{self}Policy".safe_constantize || KojacPolicy
+				"#{self}Policy".safe_constantize || KojacBasePolicy
 			end
 		end
 

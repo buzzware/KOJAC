@@ -1,4 +1,4 @@
-class KojacPolicy
+class KojacBasePolicy
   attr_reader :user, :record, :op
 
   def initialize(user, record, op=nil)
