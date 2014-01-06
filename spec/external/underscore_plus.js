@@ -355,10 +355,8 @@ _.toNull = function(aValue,aDefault) {
 	return ((aValue===null) || (aValue===undefined) || (aValue===[]) || (aValue===0) || (aValue==={}) || _.isNaN(aValue)) ? aDefault : aValue;
 }
 
-_.toFinite = function(aValue) {
-	if (_.isString(aValue))
-		aValue = Number(aValue);
-	return _.isFinite(aValue) ? aValue : 0;
+_.toFinite = function(aValue,aDefault) {
+	return _.toNumber(aValue,aDefault);
 }
 
 _.toInt = function(aValue,aDefault) {
@@ -377,14 +375,47 @@ _.toInt = function(aValue,aDefault) {
 		case 'error':
 			result = aDefault;
 			break;
+		case 'string':
 		case 'number':
-			if (isNaN(aValue))
+			aValue = Number(aValue);
+			if (!_.isFinite(aValue))
 				result = aDefault;
 			else
 				result = Math.round(aValue);
 			break;
+		case 'boolean':
+			result = aValue ? 1 : 0;
+			break;
+		default:
+			result = aDefault;
+			break;
+	}
+	return result;
+};
+
+_.toNumber = function(aValue,aDefault) {
+	if (arguments.length==1)
+		aDefault = null;
+	var t = _.typeOf(aValue);
+	var result;
+	switch(t) {
+		case 'undefined':
+		case 'null':
+		case 'array':
+		case 'object':
+		case 'function':
+		case 'class':
+		case 'instance':
+		case 'error':
+			result = aDefault;
+			break;
 		case 'string':
-			result = Math.round(Number(aValue));
+		case 'number':
+			aValue = Number(aValue);
+			if (!_.isFinite(aValue))
+				result = aDefault;
+			else
+				result = aValue;
 			break;
 		case 'boolean':
 			result = aValue ? 1 : 0;
@@ -414,6 +445,8 @@ _.toBoolean = function(aValue,aDefault) {
 			if (t==="false" || t==="no" || t==="off")
 				return false;
 		}
+	} else if (_.isNumber(aValue)) {
+		return !!aValue;
 	}
 	return aDefault;
 };
