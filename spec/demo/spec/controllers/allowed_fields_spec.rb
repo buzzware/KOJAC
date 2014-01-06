@@ -14,6 +14,9 @@ describe KojacBaseController do
 			verb: 'READ',
 			key: @user2.kojac_key
 		}
+		draw_routes do
+			get ":controller/:action"
+		end
 		result = do_op(read_op)
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
 	end
@@ -25,6 +28,9 @@ describe KojacBaseController do
 			verb: 'READ',
 			key: @user2.kojac_key
 		}
+		draw_routes do
+			get ":controller/:action"
+		end
 		result = do_op(read_op)
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
 	end
@@ -38,13 +44,17 @@ describe KojacBaseController do
 				last_name: 'Smithy-Jones'
 			}
 		}
+		draw_routes do
+			get ":controller/:action"
+		end
 		result = do_op(send_op)
 		result['last_name'].should == send_op.g?('value.last_name')
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + %w(created_at updated_at)).map(&:to_s).sort
 	end
 
 
 	it 'should read users' do
+		@user = stub_login_user(ring: ADMIN_RING)
 		@user2 = FactoryGirl.create(:user)
 		read_op = {
 			verb: 'READ',
@@ -56,6 +66,9 @@ describe KojacBaseController do
 				read_op
 			]
 		}
+		draw_routes do
+			get ":controller/:action"
+		end
 		request.accept = "application/json"
 		post :receive, format: :json, kojac: content
 
