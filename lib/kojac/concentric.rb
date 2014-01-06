@@ -83,6 +83,7 @@ module Concentric::Model
 		# ring :sales, :read                        ie. sales can read this model
 		# ring :sales, [:read, :create, :destroy]   ie. sales can read, create and destroy this model
 		def ring(aRing,aAbilities)
+			#aRing.each {|r| ring(r,aAbilities)} and return if aRing.is_a? Array shouldn't need this because of ring system
 			aRing = Concentric.lookup_ring(aRing)
 			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
 			raise "aAbilities must be a Hash" unless aAbilities.is_a? Hash # eg. :write => [:name,:address]
@@ -111,7 +112,6 @@ module Concentric::Model
 		end
 
 		# returns properties that this ring can use this ability on
-		# !!! should reverse order of parameters
 		def permitted(aRing,aAbility)
 			aRing = Concentric.lookup_ring(aRing)
 			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
@@ -130,14 +130,12 @@ module Concentric::Model
 			fields
 		end
 
-		# !!! should reverse order of parameters
 		def permitted_fields(aRing,aAbility)
 			result = self.permitted(aRing,aAbility)
 			result.delete_if { |f| self.reflections.has_key? f }
 			result
 		end
 
-		# !!! should reverse order of parameters
 		def permitted_associations(aRing,aAbility)
 			result = self.permitted(aRing,aAbility)
 			result.delete_if { |f| !self.reflections.has_key?(f) }

@@ -29,62 +29,68 @@ class KojacBasePolicy
 		#	end
 		#end
 
+  def query_ring
+	  user.ring
+  end
 
   def read?
-	  record.class.ring_can?(user.ring,:read)
+	  record.class.ring_can?(query_ring,:read)
   end
 
   def manage?
-	  record.class.ring_can?(user.ring,:write)
+	  record.class.ring_can?(query_ring,:write)
   end
 
   def index?
-	  record.class.ring_can?(user.ring,:read)
+	  record.class.ring_can?(query_ring,:read)
   end
 
   def show?
-	  record.class.ring_can?(user.ring,:read)
+	  record.class.ring_can?(query_ring,:read)
   end
 
   def create?
-	  record.class.ring_can?(user.ring,:create)
+	  record.class.ring_can?(query_ring,:create)
   end
 
   def new?
-	  record.class.ring_can?(user.ring,:create)
+	  record.class.ring_can?(query_ring,:create)
   end
 
   def update?
-	  record.class.ring_can?(user.ring,:write)
+	  record.class.ring_can?(query_ring,:write)
   end
 
   def edit?
-	  record.class.ring_can?(user.ring,:write)
+	  record.class.ring_can?(query_ring,:write)
   end
 
   def destroy?
-	  record.class.ring_can?(user.ring,:destroy)
+	  record.class.ring_can?(query_ring,:destroy)
   end
 
   def scope
     Pundit.policy_scope!(user, record.class)
   end
 
-	def permitted_attributes
-		ability = case @op[:verb]
-			when 'CREATE'
-			when 'UPDATE'
-				:write
-			when 'READ'
-				:read
-			when 'ADD'
-				:add
-			when 'REMOVE'
-				:remove
-			when 'CREATE_ON'
-				:create_on
+	def permitted_attributes(aAbility=nil)
+		raise "ability not given" unless (@op && @op[:verb]) || aAbility
+		if !aAbility && @op
+			aAbility = case @op[:verb]
+				when 'CREATE'
+				when 'UPDATE'
+					:write
+				when 'READ'
+					:read
+				when 'ADD'
+					:add
+				when 'REMOVE'
+					:remove
+				when 'CREATE_ON'
+					:create_on
+			end
 		end
-		record.class.permitted(user.ring,ability)
+		record.class.permitted(query_ring,aAbility)
 	end
 end
 

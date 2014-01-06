@@ -30,7 +30,7 @@ class User < ActiveRecord::Base
 	ring :user, :read => PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS
 	ring :user, :write => PUBLIC_FIELDS
 
-	ring :admin, :read => INTERNAL_FIELDS
-	ring :admin, :write => PROTECTED_FIELDS
+	ring :self, :read => INTERNAL_FIELDS
+	ring :self, :write => PROTECTED_FIELDS
 
 end

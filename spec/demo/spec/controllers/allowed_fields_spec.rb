@@ -35,6 +35,41 @@ describe KojacBaseController do
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
 	end
 
+	#it 'user should be able to update other''s name' do
+	#	user = stub_login_user(ring: USER_RING)
+	#	user2 = FactoryGirl.create(:user)
+	#	original_name = user2.last_name
+	#	send_op = {
+	#		verb: 'UPDATE',
+	#		key: user2.kojac_key,
+	#		value: {
+	#			last_name: 'Smithy-Jones'
+	#		}
+	#	}
+	#	draw_routes do
+	#		get ":controller/:action"
+	#	end
+	#	result = do_op(send_op)
+	#	result.g?('error')
+	#	user2.reload
+	#	user2.last_name.should == original_name
+	#	result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
+	#end
+
+	it 'user should be able to read own INTERNAL_FIELDS' do
+		user = stub_login_user(ring: USER_RING)
+		send_op = {
+			verb: 'READ',
+			key: user.kojac_key
+		}
+		draw_routes do
+			get ":controller/:action"
+		end
+		result = do_op(send_op)
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
+	end
+
+
 	it 'user should be able to update own name' do
 		user = stub_login_user(ring: USER_RING)
 		send_op = {
@@ -49,7 +84,7 @@ describe KojacBaseController do
 		end
 		result = do_op(send_op)
 		result['last_name'].should == send_op.g?('value.last_name')
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + %w(created_at updated_at)).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
 	end
 
 

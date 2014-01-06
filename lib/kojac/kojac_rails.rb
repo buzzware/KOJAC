@@ -62,6 +62,30 @@ module KojacUtils
 	def timestamp
 		Time.now.to_i
 	end
+
+	def to_jsono(aObject,aOptions)
+		result = case aObject.class
+			when Fixnum,Bignum,String,FalseClass,TrueClass,Symbol,Array
+				aObject.as_json(aOptions)
+			#when Array
+			#	sz_class = ActiveModel::ArraySerializer
+			#	sz_class.new(aObject).to_json(:scope => aScope, :root => false)
+			else
+				sz_class = aObject.send(:active_model_serializer) if aObject.respond_to?(:active_model_serializer)
+				sz_class = aObject.class.send(:active_model_serializer) if !sz_class && aObject.class.respond_to?(:active_model_serializer)
+				sz_class = KojacBaseSerializer if !sz_class && aObject.is_a?(ActiveModel)
+				if sz_class
+					sz_class.new(aObject,aOptions).as_json
+				else
+					aObject.as_json(aOptions)
+				end
+		end
+		result
+	end
+
+	def to_json(aObject,aOptions)
+		to_jsono(aObject,aOptions).to_json
+	end
 end
 
 module Kojac
@@ -104,6 +128,10 @@ module Kojac
 
 			def policy_class
 				"#{self}Policy".safe_constantize || KojacBasePolicy
+			end
+
+			def active_model_serializer
+				"#{self}Serializer".safe_constantize || KojacBaseSerializer
 			end
 		end
 
@@ -276,7 +304,7 @@ module Kojac
 			ring = current_ring
 			aResultKey ||= aItem.kojac_key
 			aOptions ||= {}
-			results[aResultKey] = aItem.sanitized_hash(ring)
+			results[aResultKey] = KojacUtils.to_jsono(aItem,scope: kojac_current_user)  # aItem.sanitized_hash(ring)
 			if included_assocs = aOptions[:include]
 				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
 				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
@@ -294,12 +322,12 @@ module Kojac
 					if a_contents.is_a? Array
 						contents_h = []
 						a_contents.each do |sub_item|
-							results[sub_item.kojac_key] = sub_item.sanitized_hash(ring)
+							results[sub_item.kojac_key] = KojacUtils.to_jsono(sub_item,scope: kojac_current_user) # sub_item.sanitized_hash(ring)
 							#contents_h << sub_item.id
 						end
 						#results[aResultKey] = contents_h
 					else
-						results[a_contents.kojac_key] = a_contents.sanitized_hash(ring)
+						results[a_contents.kojac_key] = KojacUtils.to_jsono(a_contents,scope: kojac_current_user) # a_contents.sanitized_hash(ring)
 					end
 				end
 			end

@@ -68,8 +68,8 @@ class KojacBaseController < ApplicationController
     #output = ActiveModel::Serializer.new(output,current_user).to_json
     #sz = output.active_model_serializer.new(output)
     #jsons = sz.to_json(:scope => current_user, :root => false)
-    jsons = app_serialize(output,self.kojac_current_user)
-    render json: jsons, status: status
+    jsono = KojacUtils.to_jsono(output,scope: kojac_current_user)
+    render json: jsono, status: status
 	end
 
 end
