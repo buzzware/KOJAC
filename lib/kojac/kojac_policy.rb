@@ -11,21 +11,21 @@ module Kojac
   extend ActiveSupport::Concern
 
   class << self
-    def policy_scope(user, scope, op)
+    def policy_scope(user, scope, op=nil)
       policy = Pundit::PolicyFinder.new(scope).scope
       policy.new(user, scope, op).resolve if policy
     end
 
-    def policy_scope!(user, scope, op)
+    def policy_scope!(user, scope, op=nil)
 	    Pundit::PolicyFinder.new(scope).scope!.new(user, scope, op).resolve
     end
 
-    def policy(user, record, op)
+    def policy(user, record, op=nil)
       scope = Pundit::PolicyFinder.new(record).policy
       scope.new(user, record, op) if scope
     end
 
-    def policy!(user, record, op)
+    def policy!(user, record, op=nil)
 	    Pundit::PolicyFinder.new(record).policy!.new(user, record, op)
     end
   end

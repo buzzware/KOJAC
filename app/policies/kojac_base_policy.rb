@@ -90,7 +90,23 @@ class KojacBasePolicy
 					:create_on
 			end
 		end
-		record.class.permitted(query_ring,aAbility)
+		cls = record.is_a?(Class) ? record : record.class
+		cls.permitted(query_ring,aAbility)
 	end
+
+  def permitted_fields(aAbility=nil)
+	  result = permitted_attributes(aAbility)
+	  cls = record.is_a?(Class) ? record : record.class
+		result.delete_if { |f| cls.reflections.has_key? f }
+		result
+	end
+
+	def permitted_associations(aAbility=nil)
+	  result = permitted_attributes(aAbility)
+	  cls = record.is_a?(Class) ? record : record.class
+		result.delete_if { |f| !cls.reflections.has_key? f }
+		result
+	end
+
 end
 

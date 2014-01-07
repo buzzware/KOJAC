@@ -71,11 +71,6 @@ module Concentric::Model
     aClass.send :extend, ClassMethods
   end
 
-	def sanitized_hash(aRing)
-		p_fields = self.class.permitted_fields(aRing,:read)
-		self.attributes.filter_include(p_fields)
-	end
-
 	module ClassMethods
 
 		# supports different formats :
@@ -128,18 +123,6 @@ module Concentric::Model
 			fields.uniq!
 			fields.sort!
 			fields
-		end
-
-		def permitted_fields(aRing,aAbility)
-			result = self.permitted(aRing,aAbility)
-			result.delete_if { |f| self.reflections.has_key? f }
-			result
-		end
-
-		def permitted_associations(aRing,aAbility)
-			result = self.permitted(aRing,aAbility)
-			result.delete_if { |f| !self.reflections.has_key?(f) }
-			result
 		end
 
 		# Query

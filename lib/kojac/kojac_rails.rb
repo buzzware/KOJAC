@@ -126,8 +126,13 @@ module Kojac
 				result
 			end
 
+			# used by pundit
 			def policy_class
 				"#{self}Policy".safe_constantize || KojacBasePolicy
+			end
+
+			def create_policy(aCurrentUser,aOp=nil)
+				policy_class.new(aCurrentUser,self,aOp)
 			end
 
 			def active_model_serializer
@@ -139,14 +144,14 @@ module Kojac
 			self.class.to_s.snake_case.pluralize+'__'+self.id.to_s
 		end
 
-		def update_permitted_attributes!(aChanges, aRing)
+		def update_permitted_attributes!(aChanges, aPolicy)
 			aChanges = KojacUtils.upgrade_hashes_to_params(aChanges)
-			permitted_fields = self.class.permitted_fields(aRing,:write)
-			permitted_fields = aChanges.permit(*permitted_fields)
+			p_fields = aPolicy.permitted_fields(:write)
+			p_fields = aChanges.permit(*p_fields)
 			if ::Rails::VERSION::MAJOR <= 3
-				assign_attributes(permitted_fields, :without_protection => true)
+				assign_attributes(p_fields, :without_protection => true)
 			else
-				assign_attributes(permitted_fields)
+				assign_attributes(p_fields)
 			end
 			save!
 		end
@@ -197,24 +202,25 @@ module Kojac
 		end
 
 		def create_on_association(aItem,aAssoc,aValues,aRing)
-			raise "User does not have permission for create on #{aAssoc}" unless aItem.class.ring_can?(aRing,:create_on,aAssoc.to_sym) # permitted_associations(:create_on,aRing).include?(aAssoc.to_sym)
+			raise "User does not have permission for create on #{aAssoc}" unless aItem.class.ring_can?(aRing,:create_on,aAssoc.to_sym)
 
 			return nil unless ma = aItem.class.reflect_on_association(aAssoc.to_sym)
 			a_model_class = ma.klass
+			policy = Kojac.policy!(kojac_current_user,a_model_class)
 
 			aValues = KojacUtils.upgrade_hashes_to_params(aValues || {})
 
 			case ma.macro
 				when :belongs_to
 					return nil if !aValues.is_a?(Hash)
-					fields = aValues.permit( *a_model_class.permitted_fields(aRing,:write) )
+					fields = aValues.permit( *policy.permitted_fields(:write) )
 					a_model_class.write_op_filter(current_user,fields,aValues) if a_model_class.respond_to? :write_op_filter
 					return aItem.send("build_#{aAssoc}".to_sym,fields)
 				when :has_many
 					aValues = [aValues] if aValues.is_a?(Hash)
 					return nil unless aValues.is_a? Array
 					aValues.each do |v|
-						fields = v.permit( *a_model_class.permitted_fields(aRing,:write) )
+						fields = v.permit( *policy.permitted_fields(:write) )
 						new_sub_item = nil
 						case ma.macro
 							when :has_many
@@ -249,14 +255,15 @@ module Kojac
 			model_class = deduce_model_class
 			resource,id,assoc = op['key'].split_kojac_key
 			if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
-				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}" unless model_class.ring_can?(ring,:create_on,assoc.to_sym) #   .permitted_associations(:create_on,ring).include?(assoc.to_sym)
+				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}" unless model_class.ring_can?(ring,:create_on,assoc.to_sym)
 				item = KojacUtils.model_for_key(key_join(resource,id))
 				ma = model_class.reflect_on_association(assoc.to_sym)
 				a_value = op[:value]        # get data for this association, assume {}
 				raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
 
 				a_model_class = ma.klass
-				p_fields = a_model_class.permitted_fields(ring,:write)
+				policy = Kojac.policy!(kojac_current_user,a_model_class)
+				p_fields = policy.permitted_fields(:write)
 				fields = a_value.permit( *p_fields )
 				new_sub_item = nil
 				case ma.macro
@@ -269,7 +276,8 @@ module Kojac
 				result_key = op[:result_key] || new_sub_item.kojac_key
 				merge_model_into_results(new_sub_item)
 			else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
-				p_fields = model_class.permitted_fields(ring,:write)
+				policy = Kojac.policy!(kojac_current_user,model_class)
+				p_fields = policy.permitted_fields(:write)
 				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
 
 				p_fields = op[:value].permit( *p_fields )
@@ -278,7 +286,7 @@ module Kojac
 
 				options_include = options['include'] || []
 				included_assocs = []
-				p_assocs = model_class.permitted_associations(ring,:write)
+				p_assocs = policy.permitted_associations(:write)
 				if p_assocs
 					p_assocs.each do |a|
 						next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
@@ -302,14 +310,15 @@ module Kojac
 
 		def merge_model_into_results(aItem,aResultKey=nil,aOptions=nil)
 			ring = current_ring
+			policy = Kojac.policy!(kojac_current_user,aItem)
 			aResultKey ||= aItem.kojac_key
 			aOptions ||= {}
-			results[aResultKey] = KojacUtils.to_jsono(aItem,scope: kojac_current_user)  # aItem.sanitized_hash(ring)
+			results[aResultKey] = KojacUtils.to_jsono(aItem,scope: kojac_current_user)
 			if included_assocs = aOptions[:include]
 				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
 				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
 				included_assocs.map!(&:to_sym) if included_assocs.is_a?(Array)
-				p_assocs = aItem.class.permitted_associations(ring,:read)       # ***
+				p_assocs = policy.permitted_associations(:read)       # ***
 				use_assocs = p_assocs.delete_if do |a|
 					if included_assocs.include?(a) and ma = aItem.class.reflect_on_association(a)
 						![:belongs_to,:has_many].include?(ma.macro)   # is supported association type
@@ -322,12 +331,12 @@ module Kojac
 					if a_contents.is_a? Array
 						contents_h = []
 						a_contents.each do |sub_item|
-							results[sub_item.kojac_key] = KojacUtils.to_jsono(sub_item,scope: kojac_current_user) # sub_item.sanitized_hash(ring)
+							results[sub_item.kojac_key] = KojacUtils.to_jsono(sub_item,scope: kojac_current_user)
 							#contents_h << sub_item.id
 						end
 						#results[aResultKey] = contents_h
 					else
-						results[a_contents.kojac_key] = KojacUtils.to_jsono(a_contents,scope: kojac_current_user) # a_contents.sanitized_hash(ring)
+						results[a_contents.kojac_key] = KojacUtils.to_jsono(a_contents,scope: kojac_current_user)
 					end
 				end
 			end
@@ -358,7 +367,7 @@ module Kojac
 					items = scope.by_key(key,op)
 					if op[:options] and op[:options][:atomise]==false
 						items_json = []
-						items_json = items.map {|i| i.sanitized_hash(current_ring) }
+						items_json = items.map {|i| KojacUtils.to_jsono(i,scope: kojac_current_user) }
 						results[result_key] = items_json
 					else
 						items.each do |m|
@@ -388,16 +397,18 @@ module Kojac
 			if self.item = scope.by_key(op[:key],op)
 
 				run_callbacks :update_op do
-					item.update_permitted_attributes!(op[:value], ring)
+					policy = Kojac.policy!(kojac_current_user,item,op)
+					item.update_permitted_attributes!(op[:value], policy)
 
-					associations = model.permitted_associations(ring,:write)
+					associations = policy.permitted_associations(:write)
 					associations.each do |k|
 						next unless assoc = model.reflect_on_association(k)
 						next unless op[:value][k]
 						case assoc.macro
 							when :belongs_to
 								if leaf = (item.send(k) || item.send("build_#{k}".to_sym))
-									leaf.update_permitted_attributes!(op[:value][k], ring)
+									policy = Kojac.policy!(kojac_current_user,leaf)
+									leaf.update_permitted_attributes!(op[:value][k], policy)
 								end
 						end
 					end
