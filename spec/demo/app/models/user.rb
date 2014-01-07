@@ -4,33 +4,33 @@ class User < ActiveRecord::Base
 	include ::Kojac::ModelMethods
 
 	PUBLIC_FIELDS = [
-		:email,
 		:first_name,
-		:middle_names,
 		:last_name,
+	]
+
+	PRIVATE_FIELDS = [
+		:email,
+		:middle_names,
 		:dob
 	]
 
-	PROTECTED_FIELDS = [
+	ADMIN_FIELDS = [
 		:ring
 	]
 
 	READ_ONLY_FIELDS = [
-		:id
-	]
-
-	INTERNAL_FIELDS = [
+		:id,
+		:owner_id,
 		:created_at,
 		:updated_at
 	]
 
- 	ALL_FIELDS = PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS + INTERNAL_FIELDS
-	READABLE_FIELDS = PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS
+ 	ALL_FIELDS = PUBLIC_FIELDS + PRIVATE_FIELDS + ADMIN_FIELDS + READ_ONLY_FIELDS
 
-	ring :user, :read => PUBLIC_FIELDS + PROTECTED_FIELDS + READ_ONLY_FIELDS
-	ring :user, :write => PUBLIC_FIELDS
+	ring :user, :read => PUBLIC_FIELDS
+	#ring :user, :write => []
 
-	ring :self, :read => INTERNAL_FIELDS
-	ring :self, :write => PROTECTED_FIELDS
+	ring :admin, :read => ALL_FIELDS
+	ring :admin, :write => PUBLIC_FIELDS + PRIVATE_FIELDS + ADMIN_FIELDS
 
 end

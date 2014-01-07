@@ -18,7 +18,7 @@ describe KojacBaseController do
 			get ":controller/:action"
 		end
 		result = do_op(read_op)
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS).map(&:to_s).sort
 	end
 
 	it 'admin read should return more allowed fields' do
@@ -32,31 +32,29 @@ describe KojacBaseController do
 			get ":controller/:action"
 		end
 		result = do_op(read_op)
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS + User::ADMIN_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
 	end
 
-	#it 'user should be able to update other''s name' do
-	#	user = stub_login_user(ring: USER_RING)
-	#	user2 = FactoryGirl.create(:user)
-	#	original_name = user2.last_name
-	#	send_op = {
-	#		verb: 'UPDATE',
-	#		key: user2.kojac_key,
-	#		value: {
-	#			last_name: 'Smithy-Jones'
-	#		}
-	#	}
-	#	draw_routes do
-	#		get ":controller/:action"
-	#	end
-	#	result = do_op(send_op)
-	#	result.g?('error')
-	#	user2.reload
-	#	user2.last_name.should == original_name
-	#	result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
-	#end
+	it "user should not be able to update other's name" do
+		user = stub_login_user(ring: USER_RING)
+		user2 = FactoryGirl.create(:user)
+		original_name = user2.last_name
+		send_op = {
+			verb: 'UPDATE',
+			key: user2.kojac_key,
+			value: {
+				last_name: 'Smithy-Jones'
+			}
+		}
+		draw_routes do
+			get ":controller/:action"
+		end
+		expect { do_op(send_op) }.to raise_exception(Pundit::NotAuthorizedError)
+		user2.reload
+		user2.last_name.should == original_name
+	end
 
-	it 'user should be able to read own INTERNAL_FIELDS' do
+	it 'user should be able to read own PRIVATE_FIELDS' do
 		user = stub_login_user(ring: USER_RING)
 		send_op = {
 			verb: 'READ',
@@ -66,7 +64,7 @@ describe KojacBaseController do
 			get ":controller/:action"
 		end
 		result = do_op(send_op)
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS).map(&:to_s).sort
 	end
 
 
@@ -84,9 +82,48 @@ describe KojacBaseController do
 		end
 		result = do_op(send_op)
 		result['last_name'].should == send_op.g?('value.last_name')
-		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PROTECTED_FIELDS + User::READ_ONLY_FIELDS + User::INTERNAL_FIELDS).map(&:to_s).sort
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS).map(&:to_s).sort
 	end
 
+	it 'admin user should be able to update user of same owner' do
+		user = stub_login_user(ring: ADMIN_RING, owner_id: 1)
+		user2 = FactoryGirl.create(:user, owner_id: 1)
+		original_name = user2.last_name
+		send_op = {
+			verb: 'UPDATE',
+			key: user2.kojac_key,
+			value: {
+				last_name: 'Smithy-Jones'
+			}
+		}
+		draw_routes do
+			get ":controller/:action"
+		end
+		result = do_op(send_op)
+		result['last_name'].should == send_op.g?('value.last_name')
+		user2.reload
+		user2.last_name.should == send_op.g?('value.last_name')
+		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS + User::ADMIN_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
+	end
+
+	it 'admin user should not be able to update user of different owner' do
+		user = stub_login_user(ring: ADMIN_RING, owner_id: 1)
+		user2 = FactoryGirl.create(:user, owner_id: 2)
+		original_name = user2.last_name
+		send_op = {
+			verb: 'UPDATE',
+			key: user2.kojac_key,
+			value: {
+				last_name: 'Smithy-Jones'
+			}
+		}
+		draw_routes do
+			get ":controller/:action"
+		end
+		expect { do_op(send_op) }.to raise_exception(Pundit::NotAuthorizedError)
+		user2.reload
+		user2.last_name.should == original_name
+	end
 
 	it 'should read users' do
 		@user = stub_login_user(ring: ADMIN_RING)

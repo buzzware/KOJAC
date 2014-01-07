@@ -33,14 +33,16 @@ class KojacBasePolicy
 	  user.ring
   end
 
+  # kojac methods
   def read?
 	  record.class.ring_can?(query_ring,:read)
   end
 
-  def manage?
+  def write?
 	  record.class.ring_can?(query_ring,:write)
   end
 
+  # rails methods
   def index?
 	  record.class.ring_can?(query_ring,:read)
   end

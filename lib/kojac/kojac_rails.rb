@@ -1,3 +1,5 @@
+require 'pundit'
+
 Kernel.class_eval do
   def key_join(aResource,aId=nil,aAssoc=nil)
     result = aResource
@@ -140,6 +142,10 @@ module Kojac
 			end
 		end
 
+		def unauthorized!(aMessage=nil)
+	    raise ::Pundit::NotAuthorizedError, aMessage||"You are not authorized to perform this action"
+    end
+
 		def kojac_key
 			self.class.to_s.snake_case.pluralize+'__'+self.id.to_s
 		end
@@ -147,6 +153,7 @@ module Kojac
 		def update_permitted_attributes!(aChanges, aPolicy)
 			aChanges = KojacUtils.upgrade_hashes_to_params(aChanges)
 			p_fields = aPolicy.permitted_fields(:write)
+			unauthorized! if p_fields.empty?
 			p_fields = aChanges.permit(*p_fields)
 			if ::Rails::VERSION::MAJOR <= 3
 				assign_attributes(p_fields, :without_protection => true)
@@ -414,12 +421,14 @@ module Kojac
 					end
 
 					result_key = item.kojac_key
-					results[result_key] = item
+					#results[result_key] = item
+					merge_model_into_results(item,result_key,op[:options])
 
 					associations.each do |a|
 						next unless assoc_item = item.send(a)
 						next unless key = assoc_item.respond_to?(:kojac_key) && assoc_item.kojac_key
-						results[key] = assoc_item
+						#results[key] = assoc_item
+						merge_model_into_results(assoc_item,key)
 					end
 				end
 			end
