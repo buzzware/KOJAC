@@ -30,4 +30,6 @@ class KojacBaseSerializer < ActiveModel::Serializer
 		end
 		result
 	end
+
+	alias_method :serializable_object, :serializable_hash
 end
