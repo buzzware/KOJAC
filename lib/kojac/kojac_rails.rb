@@ -65,28 +65,34 @@ module KojacUtils
 		Time.now.to_i
 	end
 
-	def to_jsono(aObject,aOptions)
-		result = case aObject.class
-			when Fixnum,Bignum,String,FalseClass,TrueClass,Symbol,Array
-				aObject.as_json(aOptions)
-			#when Array
-			#	sz_class = ActiveModel::ArraySerializer
-			#	sz_class.new(aObject).to_json(:scope => aScope, :root => false)
-			else
-				sz_class = aObject.send(:active_model_serializer) if aObject.respond_to?(:active_model_serializer)
-				sz_class = aObject.class.send(:active_model_serializer) if !sz_class && aObject.class.respond_to?(:active_model_serializer)
-				sz_class = KojacBaseSerializer if !sz_class && aObject.is_a?(ActiveModel)
-				if sz_class
-					sz_class.new(aObject,aOptions).as_json
-				else
-					aObject.as_json(aOptions)
-				end
+	def serializer_for(aObject)
+		return ::KojacBaseSerializer if aObject.is_a?(Hash)
+		return ::ActiveModel::ArraySerializer if aObject.respond_to?(:to_ary)
+		return ActiveModel::DefaultSerializer if KojacBaseSerializer::SERIALIZABLE_TYPES.include?(aObject.class)
+		return aObject.send(:active_model_serializer) if aObject.respond_to?(:active_model_serializer)
+		return aObject.class.send(:active_model_serializer) if aObject.class.respond_to?(:active_model_serializer)
+		if sz_class = ActiveModel::Serializer.serializer_for(aObject)
+			sz_class
+		else
+			aObject.respond_to?(:attributes) ? ::KojacBaseSerializer : ActiveModel::DefaultSerializer
 		end
-		result
+	end
+
+	def to_jsono(aObject,aOptions)
+		if aObject.is_a?(Hash) or aObject.respond_to? :attributes
+			serializer_for(aObject).new(aObject,aOptions).serializable_object
+		elsif aObject.respond_to?(:to_ary) && aObject.first  # Array
+			item_sz = serializer_for(aObject.first)
+		  ActiveModel::ArraySerializer.new(aObject,aOptions.merge(each_serializer: item_sz)).serializable_object
+		else
+			aObject.as_json(aOptions)
+		end
 	end
 
 	def to_json(aObject,aOptions)
-		to_jsono(aObject,aOptions).to_json
+		jsono = to_jsono(aObject,aOptions)
+		result = jsono.to_json
+		result
 	end
 end
 
@@ -161,6 +167,10 @@ module Kojac
 				assign_attributes(p_fields)
 			end
 			save!
+		end
+
+		def as_json(options = nil)
+			super
 		end
 
 	end

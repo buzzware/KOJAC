@@ -50,7 +50,7 @@ gem 'buzztools', :github => 'buzzware/buzztools', :ref => 'a403e6fad32b225be8202
 
 #gem 'kojac', :git => 'http://github.com/buzzware/KOJAC', :ref => '467817b22ebe5802323006746845a1d14764e00a'
 gem 'kojac', :path => '../..'
-gem "active_model_serializers", git: "http://github.com/rails-api/active_model_serializers"
+gem "active_model_serializers", '= 0.9.0.alpha1' #git: "http://github.com/rails-api/active_model_serializers"
 gem 'rspec-rails', :group => [:development,:test]
 #gem 'database_cleaner', :group => :test
 #gem "show_me_the_cookies", :group => :test
