@@ -8,7 +8,7 @@ GIT
 PATH
   remote: /Users/gary/repos/KOJAC
   specs:
-    kojac (0.9.4)
+    kojac (0.10.0)
       buzztools
       pundit (~> 0.2.1)
       underscore_plus
