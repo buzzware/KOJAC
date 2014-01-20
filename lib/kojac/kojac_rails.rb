@@ -101,38 +101,26 @@ module Kojac
 
 		def self.included(aClass)
 	    aClass.send :extend, ClassMethods
+			aClass.class_eval do
+				scope :by_key, ->(aKey,aOperation=nil) {
+					key = if respond_to?(:crack_key)
+						crack_key(aKey)
+					elsif aClass.respond_to?(:crack_key)
+						aClass.crack_key(aKey)
+					end
+					r = key[:resource]
+					id = key[:id]
+					a = key[:association]
+					if id
+						where(id: id)
+					else
+						where('1 = 1')
+					end
+				}
+			end
 	  end
 
 		module ClassMethods
-
-			def crack_key(aKey)
-				r,id,a = aKey.split_kojac_key
-				result = {}
-				result[:original] = aKey
-				result[:resource] = r if r
-				result[:id] = id if id
-				result[:association] = a if a
-				result
-			end
-
-			def by_key(aKey,aOperation=nil)
-				key = crack_key(aKey)
-				r = key[:resource]
-				id = key[:id]
-				a = key[:association]
-				model = self
-				model = self.rescope(model,aOperation) if self.respond_to? :rescope
-				if id
-					result = model.where(id: id).first
-					result.prepare(key,aOperation) if result.respond_to? :prepare
-				else
-					result = model.all
-					result.each do |item|
-						item.prepare(key,aOperation) if item.respond_to? :prepare
-					end
-				end
-				result
-			end
 
 			# used by pundit
 			def policy_class
@@ -145,6 +133,31 @@ module Kojac
 
 			def active_model_serializer
 				"#{self}Serializer".safe_constantize || KojacBaseSerializer
+			end
+
+			def crack_key(aKey)
+				r,id,a = aKey.split_kojac_key
+				result = {}
+				result[:original] = aKey
+				result[:resource] = r if r
+				result[:id] = id if id
+				result[:association] = a if a
+				result
+			end
+
+			def load_by_key(aKey,aOperation=nil)
+				r,id,a = aKey.split_kojac_key
+				rel = by_key(aKey)
+				if id
+					result = rel.first
+					result.prepare(aKey,aOperation) if result.respond_to? :prepare
+				else
+					result = rel.all
+					result.each do |item|
+						item.prepare(aKey,aOperation) if item.respond_to? :prepare
+					end
+				end
+				result
 			end
 		end
 
@@ -370,7 +383,9 @@ module Kojac
 			scope = Kojac.policy_scope(current_user, model, op) || model
 			if id   # item
 				if scope
-					item = scope.by_key(key,op)
+					item = scope.load_by_key(key,op)
+					#item = item.first
+					#item.prepare(key,op) if item.respond_to? :prepare
 					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
 					merge_model_into_results(item,result_key,op[:options])
 				else
@@ -381,7 +396,12 @@ module Kojac
 				result_key = op[:result_key] || op[:key]
 				results[result_key] = []
 				if scope
-					items = scope.by_key(key,op)
+					items = scope.load_by_key(key,op)
+					#items = scope.by_key(key,op)
+					#items = items.all
+					items.each do |item|
+						item.prepare(key,op) if item.respond_to? :prepare
+					end
 					if op[:options] and op[:options][:atomise]==false
 						items_json = []
 						items_json = items.map {|i| KojacUtils.to_jsono(i,scope: kojac_current_user) }
@@ -411,7 +431,7 @@ module Kojac
 			model = deduce_model_class
 			scope = Kojac.policy_scope(current_user, model, op) || model
 
-			if self.item = scope.by_key(op[:key],op)
+			if self.item = scope.load_by_key(op[:key],op)
 
 				run_callbacks :update_op do
 					policy = Kojac.policy!(kojac_current_user,item,op)
