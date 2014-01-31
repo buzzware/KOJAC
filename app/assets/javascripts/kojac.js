@@ -170,7 +170,7 @@ Kojac.Utils = {
 				var aDest = {};
 				aOptions = _.clone(aOptions);
 				var aProperties = aPropListFn ? aPropListFn(aValue) : aValue;    // may return an array of properties, or an object to use the keys from
-				var aInclude = aOptions && _.removeKey(aOptions,'include'); // must be an array
+				var aInclude = (aOptions && _.removeKey(aOptions,'include')); // must be an array
 				if (_.isString(aInclude))
 					aInclude = aInclude.split(',');
 				if (aInclude && aInclude.length) {
@@ -181,7 +181,7 @@ Kojac.Utils = {
 					for (var i=0;i<aInclude.length;i++)
 						aProperties.push(aInclude[i]);
 				}
-				var aExclude = aOptions &&  _.removeKey(aOptions,'exclude');  // must be an array
+				var aExclude = (aOptions &&  _.removeKey(aOptions,'exclude'));  // must be an array
 				if (_.isString(aExclude))
 					aExclude = aExclude.split(',');
 				var p;
@@ -189,7 +189,7 @@ Kojac.Utils = {
 				if (_.isArray(aProperties)) {
 					for (var i=0;i<aProperties.length;i++) {
 						p = aProperties[i];
-						if (aExclude && aExclude.indexOf(p)>=0)
+						if (aExclude && (aExclude.indexOf(p)>=0))
 							continue;
 						if (aCopyFn)
 							aCopyFn(aDest,aValue,p,aOptions);
@@ -199,7 +199,7 @@ Kojac.Utils = {
 					}
 				} else {  // properties is an object to use keys from
 					for (p in aProperties) {
-						if (aExclude && aExclude.indexOf(p)>=0)
+						if (aExclude && (aExclude.indexOf(p)>=0))
 							continue;
 						if (aCopyFn)
 							aCopyFn(aDest,aValue,p,aOptions);
@@ -224,6 +224,10 @@ Kojac.Utils = {
 	// returns an id above the normal 32 bit range of rails but within the range of Javascript
 	createId: function () {
 		return _.randomIntRange(4294967296,4503599627370496); // 2**32 to 2**52 see http://stackoverflow.com/questions/9389315/cross-browser-javascript-number-precision
+	},
+
+	timestamp: function() {
+		return new Date().getTime();
 	}
 
 };
@@ -494,7 +498,7 @@ Kojac.Model = Kojac.Object.extend({
 			if (['__defaults','__attributes'].indexOf(p)>=0)
 				continue;
 			var propValue = prop[p];
-			if (_.isArray(propValue) && propValue.length===2 && Kojac.FieldTypes.indexOf(propValue[0])>=0) {  // in form property: [Type, Default Value]
+			if (_.isArray(propValue) && (propValue.length===2) && (Kojac.FieldTypes.indexOf(propValue[0])>=0)) {  // in form property: [Type, Default Value]
 				this.__attributes[p] = propValue[0];
 				prop[p] = propValue[1];
 			} else if (Kojac.FieldTypes.indexOf(propValue) >= 0) {   // field type
@@ -782,8 +786,8 @@ Kojac.Request = Kojac.Object.extend({
 		// Can give existing keys with id, and will create a clone in database with a new id
 		create: function(aKeyValues,aOptions) {
 
-			var result_key = aOptions && _.removeKey(aOptions,'result_key');
-			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
+			var result_key = (aOptions && _.removeKey(aOptions,'result_key'));
+			var params = (aOptions && _.removeKey(aOptions,'params'));  // extract specific params
 			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
 
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
@@ -793,7 +797,7 @@ Kojac.Request = Kojac.Object.extend({
 				var op = this.newOperation();
 				op.verb = 'CREATE';
 				op.options = _.clone(options);
-				op.params = params && _.clone(params);
+				op.params = (params && _.clone(params));
 				var parts = keySplit(k);
 				if (parts.length >= 3)
 					op.key = k;
@@ -810,14 +814,14 @@ Kojac.Request = Kojac.Object.extend({
 		// known options will be moved from aOptions to op.options; remaining keys will be put into params
 		read: function(aKeys,aOptions) {
 			var keys = Kojac.Utils.interpretKeys(aKeys);
-			var result_key = aOptions && _.removeKey(aOptions,'result_key');  // extract result_key
-			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
+			var result_key = (aOptions && _.removeKey(aOptions,'result_key'));  // extract result_key
+			var params = (aOptions && _.removeKey(aOptions,'params'));  // extract specific params
 			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
 			var me = this;
 			jQuery.each(keys,function(i,k) {
 				var op = me.newOperation();
 				op.options = _.clone(options);
-				op.params = params && _.clone(params);
+				op.params = (params && _.clone(params));
 				op.verb = 'READ';
 				op.key = k;
 				if (i===0)
@@ -834,9 +838,9 @@ Kojac.Request = Kojac.Object.extend({
 		},
 
 		update: function(aKeyValues,aOptions) {
-			var result_key = aOptions && _.removeKey(aOptions,'result_key');
+			var result_key = (aOptions && _.removeKey(aOptions,'result_key'));
 			var options = _.extend({cacheResults: true, manufacture: true},aOptions || {});
-			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
+			var params = (aOptions && _.removeKey(aOptions,'params'));  // extract specific params
 			var first=true;
 			var kvArray = Kojac.Utils.toKeyValueArray(aKeyValues);
 			for (var i=0;i<kvArray.length-1;i+=2) {
@@ -845,7 +849,7 @@ Kojac.Request = Kojac.Object.extend({
 				var op = this.newOperation();
 				op.verb = 'UPDATE';
 				op.options = _.clone(options);
-				op.params = params && _.clone(params);
+				op.params = (params && _.clone(params));
 				op.key = k;
 				if (first) {
 					op.result_key = result_key || k;
@@ -859,14 +863,14 @@ Kojac.Request = Kojac.Object.extend({
 
 		destroy: function(aKeys,aOptions) {
 			var keys = Kojac.Utils.interpretKeys(aKeys);
-			var result_key = aOptions && _.removeKey(aOptions,'result_key');
+			var result_key = (aOptions && _.removeKey(aOptions,'result_key'));
 			var options = _.extend({cacheResults: true},aOptions || {});
-			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
+			var params = (aOptions && _.removeKey(aOptions,'params'));  // extract specific params
 			var me = this;
 			jQuery.each(keys,function(i,k) {
 				var op = me.newOperation();
 				op.options = _.clone(options);
-				op.params = params && _.clone(params);
+				op.params = (params && _.clone(params));
 				op.verb = 'DESTROY';
 				op.key = k;
 				if (i===0)
@@ -881,10 +885,10 @@ Kojac.Request = Kojac.Object.extend({
 			var op = this.newOperation();
 			op.verb = 'EXECUTE';
 
-			var params = aOptions && _.removeKey(aOptions,'params');  // extract specific params
-			op.result_key = aOptions && _.removeKey(aOptions,'result_key') || aKey;
+			var params = (aOptions && _.removeKey(aOptions,'params'));  // extract specific params
+			op.result_key = (aOptions && _.removeKey(aOptions,'result_key')) || aKey;
 			op.options = _.extend({cacheResults: false, manufacture: false},aOptions || {});
-			op.params = params && _.clone(params);
+			op.params = (params && _.clone(params));
 			op.key = aKey;
 			op.value = aValue;
 			return this;
@@ -1009,7 +1013,7 @@ Kojac.Core = Kojac.Object.extend({
 		    }
 			}
 			aRequest.results = results;
-			aRequest.result = aRequest.op && aRequest.op.result;
+			aRequest.result = (aRequest.op && aRequest.op.result);
 		},
 
 		performRequest: function(aRequest) {
@@ -1017,7 +1021,7 @@ Kojac.Core = Kojac.Object.extend({
 				var op = aRequest.ops[i];
 				var k = (op.result_key && (op.result_key !== op.key)) ? op.result_key : op.key;
 				var cacheValue = aRequest.kojac.cache.retrieve(k);
-				if (op.verb=='READ' && op.options.preferCache && (cacheValue!==undefined)) {   // resolve from cache
+				if ((op.verb=='READ') && op.options.preferCache && (cacheValue!==undefined)) {   // resolve from cache
 					op.results[k] = cacheValue;
 					var dep_keys = aRequest.kojac.dependentKeys[op.key];
 					if (dep_keys) {
@@ -1139,7 +1143,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 			if ((op.verb==='CREATE') || (op.verb==='UPDATE') || (op.verb==='EXECUTE')) {
 				jsonOp.value = Kojac.Utils.toJsono(op.value,op.options);
 			}
-			var options = op.options && _.omit(op.options,['cacheResults','preferCache']);
+			var options = (op.options && _.omit(op.options,['cacheResults','preferCache']));
 			if (options && !_.isEmpty(options))
 				jsonOp.options = options;   // omit local keys
 			jsonOp.params = op.params;
@@ -1187,7 +1191,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 						for (p in aData) {
 							if (p==='results') {
 								for (k in aData.results) {
-									if (k===aOp.key && (aOp.result_key!=aOp.key))
+									if ((k===aOp.key) && (aOp.result_key!=aOp.key))
 										aOp.results[aOp.result_key] = aData.results[k];
 									else
 										aOp.results[k] = aData.results[k];
@@ -1266,7 +1270,7 @@ Kojac.LocalStorageRemoteProvider = Kojac.Object.extend({
 			if ((op.verb==='CREATE') || (op.verb==='UPDATE') || (op.verb==='EXECUTE')) {
 				jsonOp.value = Kojac.Utils.toJsono(op.value,op.options);
 			}
-			var options = op.options && _.omit(op.options,['cacheResults','preferCache']);
+			var options = (op.options && _.omit(op.options,['cacheResults','preferCache']));
 			if (options && !_.isEmpty(options))
 				jsonOp.options = options;   // omit local keys
 			jsonOp.params = op.params;

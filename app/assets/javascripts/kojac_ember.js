@@ -91,15 +91,15 @@ Kojac.EmberModel = Ember.Object.extend({});
 Kojac.EmberModel.TypedField = function() {
   this.get = function(obj,keyName) {    // Here code was copied from Ember get to avoid endless recursion. This is more efficient but brittle for future Ember versions
 	  var meta = Ember.meta(obj),
-		  desc = meta && meta.descs[keyName],
+		  desc = (meta && meta.descs[keyName]),
 		  ret;
-	  if (Ember.ENV.MANDATORY_SETTER && meta && meta.watching[keyName] > 0) {
+	  if (Ember.ENV.MANDATORY_SETTER && meta && (meta.watching[keyName] > 0)) {
 		  ret = meta.values[keyName];
 	  } else {
 		  ret = obj[keyName];
 	  }
-	  if (ret === undefined &&
-		  'object' === typeof obj && !(keyName in obj) && 'function' === typeof obj.unknownProperty) {
+	  if ((ret === undefined) &&
+		  ('object' === typeof obj) && !(keyName in obj) && ('function' === typeof obj.unknownProperty)) {
 		  return obj.unknownProperty(keyName);
 	  }
 	  return ret;
@@ -111,7 +111,7 @@ Kojac.EmberModel.TypedField = function() {
 		if (t)
 			aValue = Kojac.interpretValueAsType(aValue,t);
 		var meta = Ember.meta(obj),
-			desc = meta && meta.descs[keyName];
+			desc = (meta && meta.descs[keyName]);
 		meta.descs[keyName] = undefined;
 		try {
 			result = Ember.set(obj,keyName,aValue);
