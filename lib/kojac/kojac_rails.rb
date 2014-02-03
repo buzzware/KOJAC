@@ -62,7 +62,7 @@ module KojacUtils
 	end
 
 	def timestamp
-		Time.now.to_i
+		Time.now.to_ms
 	end
 
 	def serializer_for(aObject)
