@@ -228,8 +228,12 @@ Kojac.Utils = {
 
 	timestamp: function() {
 		return new Date().getTime();
-	}
+	},
 
+	resolvedPromise: function() {
+		var d = jQuery.Deferred();
+		return d.resolve.apply(d,arguments);
+	}
 };
 
 /*
