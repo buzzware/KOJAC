@@ -729,7 +729,7 @@ Kojac.Operation = Kojac.Object.extend({
 	verb: null,
 	key: null,
 	value: undefined,
-	results: {},
+	results: null,
 	result_key: null,
 	result: undefined,
 	error: null,         // set with some truthy error if this operation fails
@@ -752,6 +752,8 @@ Kojac.Operation = Kojac.Object.extend({
 				result = results[response_key];
 
 			results = _.omit(results,response_key); // results now excludes primary result
+			if (!this.results)
+				this.results = {};
 			_.extend(this.results,results);   // store other results
 			this.result_key = final_result_key;
 			this.results[final_result_key] = result;  // store primary result
@@ -770,8 +772,8 @@ Kojac.Request = Kojac.Object.extend({
 		ops: [],
 		handlers: null,
 		op: null,
-		result: undefined,
-		results: {},
+		//result: undefined,
+		//results: null,
 		error: null,        // set with some truthy value if this whole request or any operation fails (will contain first error if multiple)
 		newOperation: function() {
 			var obj = new Kojac.Operation({request: this});
@@ -991,10 +993,13 @@ Kojac.Core = Kojac.Object.extend({
 		finaliseResponse: function(aRequest) {
 			// set convenience properties
 			var results = {};
-			for (var i=0;i<aRequest.ops.length;i++) {
+			if (!aRequest.error) for (var i=0;i<aRequest.ops.length;i++) {
 				var op = aRequest.ops[i];
-				if (op.error && !aRequest.error)
-					aRequest.error = op.error;
+				if (op.error) {
+					if (!aRequest.error)
+						aRequest.error = op.error;
+					break;
+				}
 				_.extend(results,op.results);
 				op.result = !op.error && op.results && (op.result_key || op.key) ? op.results[op.result_key || op.key] : null;
 				if (i===0) {
@@ -1016,13 +1021,19 @@ Kojac.Core = Kojac.Object.extend({
 			    }
 		    }
 			}
-			aRequest.results = results;
-			aRequest.result = (aRequest.op && aRequest.op.result);
+			if (aRequest.error) {
+				_.removeKey(aRequest,'results');
+				_.removeKey(aRequest,'result');
+			} else {
+				aRequest.results = results;
+				aRequest.result = (aRequest.op && aRequest.op.result);
+			}
 		},
 
 		performRequest: function(aRequest) {
 			for (var i=0;i<aRequest.ops.length;i++) {
-				var op = aRequest.ops[i];
+				var op = aRequest.ops[i]
+				op.results = {};
 				var k = (op.result_key && (op.result_key !== op.key)) ? op.result_key : op.key;
 				var cacheValue = aRequest.kojac.cache.retrieve(k);
 				if ((op.verb=='READ') && op.options.preferCache && (cacheValue!==undefined)) {   // resolve from cache
@@ -1045,7 +1056,7 @@ Kojac.Core = Kojac.Object.extend({
 			//if (this.objectFactory)
 			aRequest.handlers.add(this.handleResults,null,this);
 
-			aRequest.handlers.run(aRequest).then(this.finaliseResponse);
+			aRequest.handlers.run(aRequest).always(this.finaliseResponse);
 			return aRequest;
 		},
 
@@ -1243,18 +1254,27 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 				for (var i=0;i<server_ops.length;i++) {
 					var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
 					var opResult = (_.isArray(aResult.ops) && (i<aResult.ops.length) && aResult.ops[i]);
-					opRequest.receiveResult(opResult);
 					opRequest.fromCache = false;
 					opRequest.performed = true;
+					if (opResult.error) {
+						opRequest.error = opResult.error;
+						aRequest.handlers.handleError(opResult.error);
+						break;
+					} else {
+						opRequest.receiveResult(opResult);
+					}
 				}
 				aRequest.handlers.callNext();
 			}).fail(function(aXhr,aStatus,aError){
+				aRequest.error = me.interpretXhrError(aXhr);
+				//_.removeKey(aRequest,'results');
 				for (var i=0;i<server_ops.length;i++) {
 					var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
 					opRequest.fromCache = false;
 					opRequest.performed = true;
+					//if (opRequest.error)
+					//	_.removeKey(opRequest,'results');
 				}
-				aRequest.error = me.interpretXhrError(aXhr);
 				aRequest.handlers.handleError(aRequest.error);
 				aRequest.handlers.callNext();
 			});

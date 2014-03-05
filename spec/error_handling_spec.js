@@ -39,4 +39,52 @@ describe("Error Handling (requires web server)", function() {
 		});
 	});
 
+	it("Handles application Error", function(){
+		var App = {};
+		App.cache = new Kojac.Cache();
+		App.kojac = new Kojac.Core({
+			cache: App.cache,
+			remoteProvider: new Kojac.RemoteProvider({
+				//serverPath: '/sdfhjdfsdfhsjkhjdfskhjdfsjhkdfsdsf',
+				timeout: 2000
+			})
+		});
+		App.kojac.remoteProvider.mockReadOperationHandler = function(aOp) {
+			aOp.error = {
+				format: 'AppError',
+				kind: 'ValidationError',
+				errors: [{
+					field: 'name',
+					message: 'must be given'
+				}]
+			}
+		};
+		var op;
+		var req;
+		runs(function() {
+			req = App.kojac.executeRequest(['calc']).done(function(aKR){
+				console.log(aKR);
+			}).fail(function(aKR){
+				console.log(aKR);
+			});
+		});
+		waitsFor(function() {
+			return req.isResolved() || req.isRejected()
+		}, "request done", 3000);
+		runs(function() {
+			expect(req.error).toBeDefined();
+			expect(req.error).toEqual(req.ops[0].error);
+			expect(req.results).toBeUndefined();
+			expect(req.error).toEqual(
+				{
+					format: 'AppError',
+					kind: 'ValidationError',
+					errors: [{
+						field: 'name',
+						message: 'must be given'
+					}]
+				}
+			);
+		});
+	});
 });
