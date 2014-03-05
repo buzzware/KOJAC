@@ -1131,6 +1131,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 	mockFilePath: null,
 	mockReadOperationHandler: null,
 	serverPath: null,
+	timeout: 10000,
 
 	mockWriteOperationHandler: null,//function(aOp) {
 //		Ember.Logger.log(JSON.stringify(CanUtils.copyProperties({},aOp,null,['request'])));
@@ -1159,6 +1160,7 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 	handleRequest: function(aRequest) {
 		var result;
 		var op;
+		var me = this;
 		for (var i=0;i<aRequest.ops.length;i++) {
 			op = aRequest.ops[i];
 			if (op.performed)
@@ -1186,11 +1188,10 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 			return;
 		if (this.useMockFileValues) {
 			aRequest.handlers.waitForCallNext = true;
-			var me = this;
 			var getMockFile = function(aOp) {
 				var fp = me.mockFilePath+aOp.key+'.js';
 				var data = null;
-				return jQuery.ajax({url: fp, dataType: 'json', cache: false, data: data}).done(
+				return jQuery.ajax({url: fp, dataType: 'json', cache: false, data: data, timeout: me.timeout}).done(
 					function( aData ) {
 						for (p in aData) {
 							if (p==='results') {
@@ -1253,10 +1254,40 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 					opRequest.fromCache = false;
 					opRequest.performed = true;
 				}
-				aRequest.error = aXhr;
-				aRequest.handlers.handleError(aXhr);
+				aRequest.error = me.interpretXhrError(aXhr);
+				aRequest.handlers.handleError(aRequest.error);
 				aRequest.handlers.callNext();
 			});
+		}
+	},
+
+	interpretXhrError: function(aXhr) {
+		var http_code = null;
+		var kind = null;
+		var message = null;
+		var debug_message = null;
+		var response = null;
+		var headers = null;
+		if (http_code = (aXhr && aXhr.status)) {
+			kind = (aXhr.statusText && aXhr.statusText.replace(' ',''));
+			message = debug_message = aXhr.statusText;
+			headers = aXhr.getAllResponseHeaders();
+			response = aXhr.responseText;
+		} else {
+			http_code = null;
+			kind = "NetworkError";
+			message = "Failed to connect. Please check network or try again";
+			debug_message = "Network connection failed";
+		}
+		return {
+			format: 'KojacError',
+			http_code: http_code,   // a valid HTTP status code, or null
+			kind: kind,             // CamelCase text name of error, for conditional code handling
+			message: message,       // an explanation for normal humans
+			debug_message: debug_message, // an explanation for developers
+			xhr: aXhr,  // the original XHR object from jQuery
+			headers: headers,       // all response headers
+			response: response      // the response body
 		}
 	}
 });
