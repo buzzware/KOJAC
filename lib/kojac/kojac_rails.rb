@@ -340,10 +340,10 @@ module Kojac
 
 		def merge_model_into_results(aItem,aResultKey=nil,aOptions=nil)
 			ring = current_ring
-			policy = Kojac.policy!(kojac_current_user,aItem)
-			aResultKey ||= aItem.kojac_key
+			aResultKey ||= aItem.g? :kojac_key
+			results[aResultKey] = (aItem && KojacUtils.to_jsono(aItem,scope: kojac_current_user))
+			return unless policy = Kojac.policy!(kojac_current_user,aItem)
 			aOptions ||= {}
-			results[aResultKey] = KojacUtils.to_jsono(aItem,scope: kojac_current_user)
 			if included_assocs = aOptions[:include]
 				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
 				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
