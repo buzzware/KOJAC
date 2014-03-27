@@ -83,7 +83,7 @@ module KojacUtils
 			serializer_for(aObject).new(aObject,aOptions).serializable_object
 		elsif aObject.respond_to?(:to_ary) && aObject.first  # Array
 			item_sz = serializer_for(aObject.first)
-		  ActiveModel::ArraySerializer.new(aObject,aOptions.merge(each_serializer: item_sz)).serializable_object
+		  ActiveModel::ArraySerializer.new(aObject,aOptions.merge(each_serializer: item_sz)).as_json(aOptions)
 		else
 			aObject.as_json(aOptions)
 		end
@@ -572,7 +572,7 @@ module Kojac
 			else
 				result_key = op[:result_key] || op[:key]
 				results = op[:results] || {}             # look at op[:results][result_key]. If empty, fill with returned value from action
-				results[result_key] = result unless results.has_key? result_key
+				results[result_key] = KojacUtils.to_jsono(result,scope: kojac_current_user) unless results.has_key? result_key
 				{
 					key: op[:key],
 					verb: op[:verb],
