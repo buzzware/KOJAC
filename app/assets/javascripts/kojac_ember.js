@@ -86,43 +86,41 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 });
 
-Kojac.EmberModel = Ember.Object.extend({});
+Kojac.EmberModel = Ember.Object.extend({
 
-Kojac.EmberModel.TypedField = function() {
-  this.get = function(obj,keyName) {    // Here code was copied from Ember get to avoid endless recursion. This is more efficient but brittle for future Ember versions
-	  var meta = Ember.meta(obj),
-		  desc = (meta && meta.descs[keyName]),
-		  ret;
-	  if (Ember.ENV.MANDATORY_SETTER && meta && (meta.watching[keyName] > 0)) {
-		  ret = meta.values[keyName];
-	  } else {
-		  ret = obj[keyName];
-	  }
-	  if ((ret === undefined) &&
-		  ('object' === typeof obj) && !(keyName in obj) && ('function' === typeof obj.unknownProperty)) {
-		  return obj.unknownProperty(keyName);
-	  }
-	  return ret;
-  }
-	this.set = function(obj,keyName,aValue) {   // here we call the standard method after removing the desc to prevent endless recursion, then put it back.
-		var result;
-		var def = obj.constructor.getDefinitions();
-		var t = (def && def[keyName]);
+	set: function(k,v) {
+		var def = this.constructor.getDefinitions();
+		var t = (def && def[k]);
 		if (t)
-			aValue = Kojac.interpretValueAsType(aValue,t);
-		var meta = Ember.meta(obj),
-			desc = (meta && meta.descs[keyName]);
-		meta.descs[keyName] = undefined;
-		try {
-			result = Ember.set(obj,keyName,aValue);
-		}
-		finally {
-			meta.descs[keyName] = desc;
-		}
-		return result;
+			v = Kojac.interpretValueAsType(v,t);
+		return this._super(k,v);
+	},
+
+	setProperties: function(values) {
+		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
+		return this._super(values);
+	},
+
+	// copy the property from source to dest
+	// this could be a static fn
+	toJsonoCopyFn: function(aDest,aSource,aProperty,aOptions) {
+		aDest[aProperty] = Kojac.Utils.toJsono(Ember.get(aSource,aProperty),aOptions);
+	},
+
+	// return array of names, or an object and all keys will be used
+	// this could be a static fn
+	toPropListFn: function(aSource,aOptions) {
+		if ("getDefinitions" in aSource.constructor)
+			return aSource.constructor.getDefinitions();  // return an object to use all keys from
+		else
+			return aSource;    // this is a simple object, so use all keys
+	},
+
+	toJsono: function(aOptions) {
+		return Kojac.Utils.toJsono(this,aOptions,this.toPropListFn,this.toJsonoCopyFn)
 	}
-};
-Kojac.EmberModel.TypedField.prototype = new Ember.Descriptor();
+
+});
 
 Kojac.EmberModel.reopenClass({
 
@@ -178,17 +176,6 @@ Kojac.EmberModel.reopenClass({
 		return this._defaults || {};
 	},
 
-	__addDescs: function(aNewInstance){
-		var meta = Ember.meta(aNewInstance);
-		var defs = this.getDefinitions();
-		if (defs) {
-			for (p in defs) {
-				meta.descs[p] = new Kojac.EmberModel.TypedField(aNewInstance);
-			}
-		}
-	},
-
-
 	__createWithMixins: Kojac.EmberModel.createWithMixins,
 	createWithMixins: function() {
 		var inputs = arguments;
@@ -196,7 +183,6 @@ Kojac.EmberModel.reopenClass({
 			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
 		}
 		var result = this.__createWithMixins.apply(this,inputs);
-		this.__addDescs(result);
 		return result;
   },
 
@@ -207,62 +193,11 @@ Kojac.EmberModel.reopenClass({
 			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
 		}
 		var result = this.__create.apply(this,inputs);
-		this.__addDescs(result);
 		return result;
 	}
 
 });
 
-Kojac.EmberModel.reopen({
-
-	___set: Ember.set,
-	set: function(k,v) {
-		var def = this.constructor.getDefinitions();
-		var t = (def && def[k]);
-		if (t)
-			v = Kojac.interpretValueAsType(v,t);
-		return this.___set(this,k,v);
-	},
-
-	___setProperties: Ember.setProperties,
-	setProperties: function(values) {
-		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
-		return this.___setProperties(this,values);
-	},
-
-	// copy the property from source to dest
-	// this could be a static fn
-	toJsonoCopyFn: function(aDest,aSource,aProperty,aOptions) {
-		aDest[aProperty] = Kojac.Utils.toJsono(Ember.get(aSource,aProperty),aOptions);
-	},
-
-	// return array of names, or an object and all keys will be used
-	// this could be a static fn
-	toPropListFn: function(aSource,aOptions) {
-		if ("getDefinitions" in aSource.constructor)
-			return aSource.constructor.getDefinitions();  // return an object to use all keys from
-		else
-			return aSource;    // this is a simple object, so use all keys
-	},
-
-	toJsono: function(aOptions) {
-		return Kojac.Utils.toJsono(this,aOptions,this.toPropListFn,this.toJsonoCopyFn)
-//		for (var p in defs)
-//			result[p] = this.get(p);
-//		if (includes) {
-//			includes = this.getProperties(includes);
-//			var v;
-//			for (var p in includes) {
-//				v = includes[p];
-//				if (v && (typeof(v)=="object") && ("toJsono" in v))
-//					includes[p] = v.toJsono();
-//			}
-//			_.extend(result,includes);
-//		}
-//		return result;
-	}
-
-});
 
 Kojac.EmberCache = Ember.Object.extend({
 
