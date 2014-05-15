@@ -31,7 +31,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "canjs-rails"
   s.add_development_dependency "ember-rails"
-  s.add_development_dependency "jquery-rails"
   s.add_development_dependency "capybara"
   s.add_development_dependency "sqlite3"
 end
