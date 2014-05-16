@@ -813,7 +813,7 @@ Kojac.Request = Kojac.Object.extend({
 					op.key = keyResource(k);
 				if ((i===0) && result_key)
 					op.result_key = result_key;
-				op.value = v;
+				op.value = Kojac.Utils.toJsono(v,op.options);
 			}
 			return this;
 		},
@@ -864,7 +864,7 @@ Kojac.Request = Kojac.Object.extend({
 					first = false;
 				} else
 					op.result_key = k;
-				op.value = v;
+				op.value = Kojac.Utils.toJsono(v,op.options);
 			};
 			return this;
 		},
@@ -898,7 +898,7 @@ Kojac.Request = Kojac.Object.extend({
 			op.options = _.extend({cacheResults: false, manufacture: false},aOptions || {});
 			op.params = (params && _.clone(params));
 			op.key = aKey;
-			op.value = aValue;
+			op.value = Kojac.Utils.toJsono(aValue,op.options);
 			return this;
 		},
 
