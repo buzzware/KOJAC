@@ -28,30 +28,30 @@ describe("Kojac Ember Model", function() {
 
 	it("extend and check null values", function() {
 		var product = Product1.create();
-		expect(product.name).toBeNull();
-		expect(product.purchases).toBeNull();
-		expect(product.weight).toBeNull();
-		expect(product.isMember).toBeNull();
-		expect(product.start).toBeNull();
-		expect(Product1.getDefinitions()).toEqual(product1Values);
+		expect(product.get('name')).toBeNull();
+		expect(product.get('purchases')).toBeNull();
+		expect(product.get('weight')).toBeNull();
+		expect(product.get('isMember')).toBeNull();
+		expect(product.get('start')).toBeNull();
+		//expect(Product1.getDefinitions()).toEqual(product1Values);
 	});
 
 	it("extend and check non-null values", function() {
 		var product = Product2.create();
-		expect(product.name).toBe(product2Values.name);
-		expect(product.purchases).toBe(product2Values.purchases);
-		expect(product.weight).toBe(product2Values.weight);
-		expect(product.isMember).toBe(product2Values.isMember);
 		expect(product.get('name')).toBe(product2Values.name);
 		expect(product.get('purchases')).toBe(product2Values.purchases);
 		expect(product.get('weight')).toBe(product2Values.weight);
 		expect(product.get('isMember')).toBe(product2Values.isMember);
-		expect(Product2.getDefinitions()).toEqual({
-			name: String,
-			purchases: Int,
-			weight: Number,
-			isMember: Boolean
-		});
+		expect(product.get('name')).toBe(product2Values.name);
+		expect(product.get('purchases')).toBe(product2Values.purchases);
+		expect(product.get('weight')).toBe(product2Values.weight);
+		expect(product.get('isMember')).toBe(product2Values.isMember);
+//		expect(Product2.getDefinitions()).toEqual({
+//			name: String,
+//			purchases: Int,
+//			weight: Number,
+//			isMember: Boolean
+//		});
 	});
 
 	it("Ember.Object extend and create", function() {
@@ -98,22 +98,22 @@ describe("Kojac Ember Model", function() {
 		for (p in wrongProductValues)
 			product.set(p,wrongProductValues[p]);
 		//person.setProperties(wrongProductValues);
-		expect(product.name).toBe('123');
-		expect(product.purchases).toBe(2);
-		expect(product.weight).toBe(null);
-		expect(product.isMember).toBe(true);
-		expect(product.start).toEqual(new Date(2010,5,1,23,59,56));
+		expect(product.get('name')).toBe('123');
+		expect(product.get('purchases')).toBe(2);
+		expect(product.get('weight')).toBe(null);
+		expect(product.get('isMember')).toBe(true);
+		expect(product.get('start')).toEqual(new Date(2010,5,1,23,59,56));
 	});
 
 	it("check setProperties values requiring conversion", function() {
 		moment().zone(8);
 		var product = Product1.create();
 		product.setProperties(wrongProductValues);
-		expect(product.name).toBe('123');
-		expect(product.purchases).toBe(2);
-		expect(product.weight).toBe(null);
-		expect(product.isMember).toBe(true);
-		expect(product.start).toEqual(new Date(2010,5,1,23,59,56));
+		expect(product.get('name')).toBe('123');
+		expect(product.get('purchases')).toBe(2);
+		expect(product.get('weight')).toBe(null);
+		expect(product.get('isMember')).toBe(true);
+		expect(product.get('start')).toEqual(new Date(2010,5,1,23,59,56));
 	});
 
 	it("check init", function() {
@@ -133,16 +133,16 @@ describe("Kojac Ember Model", function() {
 				for (p in initValues) {
 					if (p=='weight')
 						continue;
-					this[p] = initValues[p];
+					this.set(p,initValues[p]);
 				}
 			}
 		};
 		var Product3 = Kojac.EmberModel.extend(productValuesWithInit);
 		var product = Product3.create();
-		expect(product.name).toBe(initValues.name);
-		expect(product.purchases).toBe(initValues.purchases);
-		expect(product.isMember).toBe(initValues.isMember);
-		expect(product.weight).toBe(productValuesWithInit.weight);
+		expect(product.get('name')).toBe(initValues.name);
+		expect(product.get('purchases')).toBe(initValues.purchases);
+		expect(product.get('isMember')).toBe(initValues.isMember);
+		expect(product.get('weight')).toBe(productValuesWithInit.weight);
 	});
 
 	it("check computed property", function() {
@@ -150,13 +150,13 @@ describe("Kojac Ember Model", function() {
 			first_name: 'Jeffery',
 			last_name: 'Watt',
 			full_name: function() {
-				return this.first_name+' '+this.last_name;
+				return this.get('first_name')+' '+this.get('last_name');
 			}.property()
 		};
 		var Cust = Ember.Object.extend(initValues);
 		var cust = Cust.create();
-		expect(cust.first_name).toBe(initValues.first_name);
-		expect(cust.last_name).toBe(initValues.last_name);
+		expect(cust.get('first_name')).toBe(initValues.first_name);
+		expect(cust.get('last_name')).toBe(initValues.last_name);
 		expect(cust.get('full_name')).toBe(initValues.first_name+' '+initValues.last_name);
 	});
 

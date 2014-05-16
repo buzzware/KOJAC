@@ -41,6 +41,20 @@ describe("Kojac Override", function() {
 		expect(Object.getPrototypeOf(RndModel) !== Ember.Object).toBeTruthy();
 	});
 
+	it("override get and set", function() {
+		//var RndModel = Ember.Object.extend({});
+		var SubModel1 = Kojac.EmberModel.extend({
+			name: Int
+		});
+		//var SubModel2 = RndModel.extend({});
+		var subModel1 = SubModel1.create({
+			name: 'fred'
+		});
+		console.log(subModel1.get('name'));
+		subModel1.set('name','john');
+		console.log(subModel1.get('name'));
+	});
+
 //	it("can modify class desc", function() {
 //
 //		var TestMethodType = function(aParam) {

@@ -64,7 +64,7 @@ describe("EmberModel toJsono", function() {
 	
 	it("simple model with embedded object", function() {
 		var input = Product.create(productValues1);
-		input.embedded = values2;
+		input.set('embedded',values2);
 		
 		var actual = Kojac.Utils.toJsono(input);
 		

@@ -328,7 +328,10 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 					return aValue;
 					break;
 				case String:
-					return Number(aValue);
+					if (aValue.trim()=='')
+						return null;
+					var n = Number(aValue);
+					return isFinite(n) ? n : null;
 					break;
 			}
 			break;
@@ -344,16 +347,15 @@ Kojac.interpretValueAsType = function(aValue, aDestType) {
 					return aValue ? 1 : 0;
 					break;
 				case Number:
-					if (isNaN(aValue))
-						return null;
-					else
-						return Math.round(aValue);
+					return isFinite(aValue) ? Math.round(aValue) : null;
 					break;
 				case String:
-					return Math.round(Number(aValue));
+					if (aValue.trim()=='')
+						return null;
+					var n = Number(aValue);
+					return isFinite(n) ? Math.round(n) : null;
 					break;
 			}
-
 			break;
 		case Date:
 			switch(sourceType) {
@@ -452,7 +454,7 @@ keySplit = function(aKey) {
 	parts = ia.split('.');
 	if (parts.length>=1) {    // id
 		id = parts[0];
-		var id_as_i = Number(id);
+		var id_as_i = Number(id); // !!! watch for Number('') => 0
 		if (_.isFinite(id_as_i))
 			id = id_as_i;
 		result.push(id);

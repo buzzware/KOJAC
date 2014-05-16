@@ -88,18 +88,18 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 Kojac.EmberModel = Ember.Object.extend({
 
-	set: function(k,v) {
-		var def = this.constructor.getDefinitions();
-		var t = (def && def[k]);
-		if (t)
-			v = Kojac.interpretValueAsType(v,t);
-		return this._super(k,v);
-	},
-
-	setProperties: function(values) {
-		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
-		return this._super(values);
-	},
+//	set: function(k,v) {
+//		var def = this.constructor.getDefinitions();
+//		var t = (def && def[k]);
+//		if (t)
+//			v = Kojac.interpretValueAsType(v,t);
+//		return this._super(k,v);
+//	},
+//
+//	setProperties: function(values) {
+//		values = Kojac.readTypedProperties({},values,this.constructor.getDefinitions());
+//		return this._super(values);
+//	},
 
 	// copy the property from source to dest
 	// this could be a static fn
@@ -110,10 +110,15 @@ Kojac.EmberModel = Ember.Object.extend({
 	// return array of names, or an object and all keys will be used
 	// this could be a static fn
 	toPropListFn: function(aSource,aOptions) {
-		if ("getDefinitions" in aSource.constructor)
-			return aSource.constructor.getDefinitions();  // return an object to use all keys from
-		else
-			return aSource;    // this is a simple object, so use all keys
+		var p;
+		if (p = aSource && aSource.constructor && aSource.constructor.proto && aSource.constructor.proto()) {
+			if ((p = Ember.meta(p)) && (p = p.descs))
+				return _.keys(p);
+			else
+				return [];
+		} else {
+			return aSource;
+		}
 	},
 
 	toJsono: function(aOptions) {
@@ -122,79 +127,148 @@ Kojac.EmberModel = Ember.Object.extend({
 
 });
 
+//fullName: Ember.computed('firstName', 'lastName', function() {
+//  return this.get('firstName') + ' ' + this.get('lastName');
+//})
+
+// in create, set cache with defaults merged with given values
+// getter - use cacheFor
+// setter - set cache with converted value
+// in extend, generate with Ember.computed().cacheable(true)
+
+
+
+
 Kojac.EmberModel.reopenClass({
+
+
+//	var SubModel1 = RndModel.extend({
+//		name: Ember.computed(function(aKey,aValue){
+//			// MyClass.metaForProperty('person');
+//			var m = Ember.meta(this);
+//			var d = m && m.descs[aKey];
+//			//var cache =  m.cache;
+//			var v;
+//
+//			if (arguments.length==2) { // set
+//				var t = d && d._meta && d._meta.type;
+//				if (t)
+//					v = Kojac.interpretValueAsType(aValue,t);
+//				else
+//					v = aValue;
+//				//cache[aKey] = v;
+//			} else {  // get
+//				v = Ember.cacheFor(this,aKey);
+//			}
+//			return v;
+//		}).meta({
+//			type: Int
+//		})
+//	});
+
 
 	extend: function() {
 		var defs = arguments[0];
 		var extender = {};
-		var definitions = this.getDefinitions();
-		var defaults = this.getDefaults();
+//		var definitions = this.getDefinitions();
+//		var defaults = this.getDefaults();
 
 		var _type;
 		var _value;
 		//var _init;
 		if (defs) {
+			var destType;
+			var defaultValue;
 			for (p in defs) {
 				var pValue = defs[p];
+				destType = null;
+				defaultValue = null;
+
 				if (Kojac.FieldTypes.indexOf(pValue)>=0) { // pValue is field type
-					definitions[p] = pValue;
-					defaults[p] = null;
-					extender[p] = null;
+					destType = pValue;
+					defaultValue = null;
 				} else {
 					var ft=Kojac.getPropertyValueType(pValue);
 					if (ft && (Kojac.SimpleTypes.indexOf(ft)>=0)) {  // pValue is simple field value
-						definitions[p] = ft;
-						defaults[p] = pValue;
-						extender[p] = pValue;
-					} else {  // pValue is something else
-						//definitions[p] = _type;
-						//defaults[p] = _value;
-						extender[p] = pValue;
+						destType = ft;
+						defaultValue = pValue;
 					}
+				}
+
+				if (destType) {
+					extender[p] = Ember.computed(function(aKey,aValue){
+						// MyClass.metaForProperty('person');
+						var m = Ember.meta(this,false);
+						var d = m && m.descs[aKey];
+						var v;
+
+						if (arguments.length==2) { // set
+							var t = d && d._meta && d._meta.type;
+							if (t)
+								v = Kojac.interpretValueAsType(aValue,t);
+							else
+								v = aValue;
+							//cache[aKey] = v;
+						} else {  // get
+							var cache =  m.cache;
+							v = Ember.cacheFor(this,aKey);
+					    if (cache && aKey in cache) {
+					      return cache[aKey];
+					    } else {
+						    return d && d._meta && d._meta.value;
+					    }
+						}
+						return v;
+					}).meta({
+						type: destType,
+						value: defaultValue
+					})
+				} else {
+					extender[p] = pValue;
 				}
 			}
 		}
 		var result = this._super(extender);
-		result.setDefinitions(definitions);
-		result.setDefaults(defaults);
-		return result;
-	},
-
-	setDefinitions: function(aDefinitions) {
-		this._definitions = (aDefinitions || {});
-	},
-
-	getDefinitions: function() {
-		return this._definitions || {};
-	},
-
-	setDefaults: function(aDefaults) {
-		this._defaults = (aDefaults || {});
-	},
-
-	getDefaults: function() {
-		return this._defaults || {};
-	},
-
-	__createWithMixins: Kojac.EmberModel.createWithMixins,
-	createWithMixins: function() {
-		var inputs = arguments;
-		if (inputs.length) {
-			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
-		}
-		var result = this.__createWithMixins.apply(this,inputs);
-		return result;
-  },
-
-	__create: Kojac.EmberModel.create,
-	create: function() {
-		var inputs = arguments;
-		if (inputs.length) {
-			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
-		}
-		var result = this.__create.apply(this,inputs);
+//		result.setDefinitions(definitions);
+//		result.setDefaults(defaults);
 		return result;
 	}
+
+//	setDefinitions: function(aDefinitions) {
+//		this._definitions = (aDefinitions || {});
+//	},
+//
+//	getDefinitions: function() {
+//		return this._definitions || {};
+//	},
+//
+//	setDefaults: function(aDefaults) {
+//		this._defaults = (aDefaults || {});
+//	},
+//
+//	getDefaults: function() {
+//		return this._defaults || {};
+//	},
+
+//	__createWithMixins: Kojac.EmberModel.createWithMixins,
+//	createWithMixins: function() {
+//		var inputs = arguments;
+//		if (inputs.length) {
+//			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
+//		}
+//		var result = this.__createWithMixins.apply(this,inputs);
+//		return result;
+//  },
+//
+//	__create: Kojac.EmberModel.create,
+//	create: function() {
+//		var inputs = arguments;
+//		if (inputs.length) {
+//			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
+//		}
+//		var result = this.__create.apply(this,inputs);
+//		return result;
+//	}
 
 });
 
