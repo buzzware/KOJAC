@@ -972,7 +972,7 @@ Kojac.Core = Kojac.Object.extend({
 								if (existing.setProperties)
 									existing.setProperties(value);
 								else
-									_.copyProperties(existing,value);
+									_.extend(existing,value);
 								value = existing;
 							} else {
 								if ((op.options.manufacture!==false) && (this.objectFactory))
