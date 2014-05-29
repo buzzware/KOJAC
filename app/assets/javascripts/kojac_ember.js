@@ -114,9 +114,17 @@ Kojac.EmberModel = Ember.Object.extend({
 		if (p = aSource && aSource.constructor && aSource.constructor.proto && aSource.constructor.proto()) {
 			if ((p = Ember.meta(p)) && (p = p.descs)) {
 				var result = [];
-				for (var k in p) {
-					var m = p[k].meta();
-					if (m && m.kemp)
+				var m;
+				var d;
+				var k;
+				var keys = _.keys(p);
+				for (var i=0;i<keys.length;i++) {
+					k = keys[i];
+					if (!(d = p[k]))
+						continue;
+					if (!(m = d.meta()))
+						continue;
+					if (m.kemp)
 						result.push(k);
 				}
 				return result;
