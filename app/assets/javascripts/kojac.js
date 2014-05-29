@@ -1007,21 +1007,21 @@ Kojac.Core = Kojac.Object.extend({
 				if (i===0) {
 					aRequest.op = op;
 				}
-		    if ((op.performed===true) && (op.fromCache===false) && (op.options.cacheResults!==false)) {
-			    var ex_key = (op.result_key || op.key);
-			    var dep_keys = [];
-			    for (var p in op.results) {
-				    if (p===ex_key)
-				      continue;
-				    dep_keys.push(p);
-			    }
-			    if (!dep_keys.length) {
-			      if (op.key in aRequest.kojac.dependentKeys)
-			        delete aRequest.kojac.dependentKeys[op.key];
-				  } else {
-		        aRequest.kojac.dependentKeys[op.key] = dep_keys
-			    }
-		    }
+				if ((op.performed===true) && (op.fromCache===false) && (op.options.cacheResults!==false)) {
+					var ex_key = (op.result_key || op.key);
+					var dep_keys = [];
+					for (var p in op.results) {
+						if (p===ex_key)
+							continue;
+						dep_keys.push(p);
+					}
+					if (!dep_keys.length) {
+						if (op.key in aRequest.kojac.dependentKeys)
+							delete aRequest.kojac.dependentKeys[op.key];
+					} else {
+						aRequest.kojac.dependentKeys[op.key] = dep_keys
+					}
+				}
 			}
 			if (aRequest.error) {
 				_.removeKey(aRequest,'results');

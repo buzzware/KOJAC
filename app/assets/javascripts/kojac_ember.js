@@ -112,9 +112,15 @@ Kojac.EmberModel = Ember.Object.extend({
 	toPropListFn: function(aSource,aOptions) {
 		var p;
 		if (p = aSource && aSource.constructor && aSource.constructor.proto && aSource.constructor.proto()) {
-			if ((p = Ember.meta(p)) && (p = p.descs))
-				return _.keys(p);
-			else
+			if ((p = Ember.meta(p)) && (p = p.descs)) {
+				var result = [];
+				for (var k in p) {
+					var m = p[k].meta();
+					if (m && m.kemp)
+						result.push(k);
+				}
+				return result;
+			} else
 				return [];
 		} else {
 			return aSource;
@@ -220,6 +226,7 @@ Kojac.EmberModel.reopenClass({
 						}
 						return v;
 					}).meta({
+						kemp: true,     // Kojac Ember Model Property
 						type: destType,
 						value: defaultValue
 					})
@@ -308,8 +315,10 @@ Kojac.EmberCache = Ember.Object.extend({
 		this.endPropertyChanges();
 	},
 
-	collectIds: function(aPrefix, aIds) {
-		return Kojac.collectIds(aPrefix,aIds,this);
+	collectIds: function(aPrefix, aIds, aFilterFn) {
+		if (!aIds)
+			aIds = this.get(aPrefix);
+		return Kojac.collectIds(aPrefix,aIds,this,aFilterFn);
 	}
 
 });
