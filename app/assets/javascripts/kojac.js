@@ -975,8 +975,11 @@ Kojac.Core = Kojac.Object.extend({
 									_.extend(existing,value);
 								value = existing;
 							} else {
-								if ((op.options.manufacture!==false) && (this.objectFactory))
-									value = this.objectFactory.manufacture(value,key);
+								if ((op.options.manufacture!==false) && (this.objectFactory)) {
+									// if primary key & reassigned by result_key then manufacture with original key
+									var mkey = (key === op.result_key) ? op.key : key;
+									value = this.objectFactory.manufacture(value,mkey);
+								}
 							}
 						}
 						op.results[key] = value;
