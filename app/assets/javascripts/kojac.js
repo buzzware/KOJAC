@@ -962,9 +962,9 @@ Kojac.Core = Kojac.Object.extend({
 
 					for (var key in op.results) {
 						var value = op.results[key];
-						if ((op.options.atomise!==false) && _.isObjectStrict(value)) {
+						if ((op.options.atomise!==false) && _.isObjectStrict(value)) {  // we are atomising and this is an object
 							var existing = this.cache.retrieve(key);
-							if (_.isObjectStrict(existing)) {
+							if (_.isObjectStrict(existing) && (op.options.cacheResults!==false)) {         // object is already in cache, and we are caching, so update it
 								if (existing.beginPropertyChanges) {
 									existing.beginPropertyChanges();
 									updatedObjects.push(existing);
@@ -974,7 +974,7 @@ Kojac.Core = Kojac.Object.extend({
 								else
 									_.extend(existing,value);
 								value = existing;
-							} else {
+							} else {                                                                      // otherwise manufacture
 								if ((op.options.manufacture!==false) && (this.objectFactory)) {
 									// if primary key & reassigned by result_key then manufacture with original key
 									var mkey = (key === op.result_key) ? op.key : key;
