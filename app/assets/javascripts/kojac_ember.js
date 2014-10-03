@@ -86,6 +86,67 @@ Kojac.EmberObjectFactory = Kojac.Object.extend({
 
 });
 
+//App.EmberObjectFactory2 = Kojac.Object.extend({
+//
+//	namespace: null,
+//	matchers: null,
+//	defaultClass: null,
+//
+//	register: function(aPairs) {
+//		if (!aPairs)
+//			return;
+//		if (this.matchers===null)
+//			this.matchers = [];
+//		for (var i = 0; i < aPairs.length; i++)
+//			this.matchers.push(aPairs[i]);
+//	},
+//
+//	emberClassFromKey: function(aKey) {
+//		var pair;
+//		var re;
+//		var newClass;
+//		for (var i = 0; i < this.matchers.length; i++) {
+//			pair = this.matchers[i];
+//			re = pair[0];
+//			if (!re.test(aKey))
+//				continue;
+//			newClass = pair[1];
+//			break;
+//		}
+//		if (!newClass) {
+//			var ns = this.namespace || Window;
+//			var r = keyResource(aKey);
+//			if (r && (r[0]==r[0].toUpperCase()) && _.isFunction(ns[r]))
+//				newClass = ns[r];
+//		}
+//		if (!newClass)
+//			newClass = this.defaultClass;
+//		return newClass;
+//	},
+//
+//	emberObjectFactoryArray: function(aArray,aKey) {
+//		var newClass = this.emberClassFromKey(aKey);
+//		var result = [];
+//		for (var i=0; i<aArray.length; i++) {
+//			var newv = newClass.create(aArray[i]);
+//			result.push(newv);
+//		}
+//		return result;
+//	},
+//
+//	manufacture: function(aObject,aKey) {
+//		if (_.isArray(aObject)) {
+//			return this.emberObjectFactoryArray(aObject, aKey)
+//		} else {
+//			var newClass = this.emberClassFromKey(aKey);
+//			var newv = newClass.create(aObject);
+//			return newv;
+//		}
+//	}
+//
+//});
+//
+//
 Kojac.EmberModel = Ember.Object.extend({
 
 //	set: function(k,v) {
