@@ -78,9 +78,10 @@ module KojacUtils
 		end
 	end
 
-	def to_jsono(aObject,aOptions)
+	def to_jsono(aObject,aOptions=nil)
+		aOptions ||= {}
 		if aObject.is_a?(Hash) or aObject.respond_to? :attributes
-			serializer_for(aObject).new(aObject,aOptions).serializable_object
+			serializer_for(aObject).new(aObject,aOptions).serializable_hash
 		elsif aObject.respond_to?(:to_ary) && aObject.first  # Array
 			item_sz = serializer_for(aObject.first)
 		  ActiveModel::ArraySerializer.new(aObject,aOptions.merge(each_serializer: item_sz)).as_json(aOptions)
@@ -342,34 +343,35 @@ module Kojac
 			ring = current_ring
 			aResultKey ||= aItem.g? :kojac_key
 			results[aResultKey] = (aItem && KojacUtils.to_jsono(aItem,scope: kojac_current_user))
-			return unless policy = Kojac.policy!(kojac_current_user,aItem)
-			aOptions ||= {}
-			if included_assocs = aOptions[:include]
-				included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
-				included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
-				included_assocs.map!(&:to_sym) if included_assocs.is_a?(Array)
-				p_assocs = policy.permitted_associations(:read)       # ***
-				use_assocs = p_assocs.delete_if do |a|
-					if included_assocs.include?(a) and ma = aItem.class.reflect_on_association(a)
-						![:belongs_to,:has_many].include?(ma.macro)   # is supported association type
-					else
-						true  # no such assoc
-					end
-				end
-				use_assocs.each do |a|
-					next unless a_contents = aItem.send(a)
-					if a_contents.is_a? Array
-						contents_h = []
-						a_contents.each do |sub_item|
-							results[sub_item.kojac_key] = KojacUtils.to_jsono(sub_item,scope: kojac_current_user)
-							#contents_h << sub_item.id
+			if policy = Kojac.policy!(kojac_current_user,aItem)
+				aOptions ||= {}
+				if included_assocs = aOptions[:include]
+					included_assocs = included_assocs.split(',') if included_assocs.is_a?(String)
+					included_assocs = [included_assocs] unless included_assocs.is_a?(Array)
+					included_assocs.map!(&:to_sym) if included_assocs.is_a?(Array)
+					p_assocs = policy.permitted_associations(:read)       # ***
+					use_assocs = p_assocs.delete_if do |a|
+						if included_assocs.include?(a) and ma = aItem.class.reflect_on_association(a)
+							![:belongs_to,:has_many].include?(ma.macro)   # is supported association type
+						else
+							true  # no such assoc
 						end
-						#results[aResultKey] = contents_h
-					else
-						results[a_contents.kojac_key] = KojacUtils.to_jsono(a_contents,scope: kojac_current_user)
+					end
+					use_assocs.each do |a|
+						next unless a_contents = aItem.send(a)
+						if a_contents.is_a? Array
+							contents_h = []
+							a_contents.each do |sub_item|
+								results[sub_item.kojac_key] = KojacUtils.to_jsono(sub_item,scope: kojac_current_user)
+							end
+						else
+							results[a_contents.kojac_key] = KojacUtils.to_jsono(a_contents,scope: kojac_current_user)
+						end
 					end
 				end
 			end
+			results_insert_filter(results,aItem,aResultKey,aOptions) if respond_to?(:results_insert_filter)
+			results
 		end
 
 		public
