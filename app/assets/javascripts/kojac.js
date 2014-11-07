@@ -901,7 +901,10 @@ Kojac.Request = Kojac.Object.extend({
 		},
 
 		request: function() {
-			return this.kojac.performRequest(this);
+			var result = this.kojac.performRequest(this);
+			if (this.kojac.errorHandler)
+				result = result.fail(this.kojac.errorHandler);
+			return result;
 		}
 });
 
@@ -915,6 +918,7 @@ Kojac.Core = Kojac.Object.extend({
 		remoteProvider: null,
 		objectFactory: null,
 		cache: null,
+		errorHandler: null,
 		dependentKeys: {},
 
 		newRequest: function() {
