@@ -768,6 +768,7 @@ Kojac.Operation = Kojac.Object.extend({
  */
 Kojac.Request = Kojac.Object.extend({
 		kojac: null,
+		chaining: false,
 		options: {},
 		ops: [],
 		handlers: null,
@@ -813,7 +814,10 @@ Kojac.Request = Kojac.Object.extend({
 					op.result_key = result_key;
 				op.value = v;
 			}
-			return this;
+			if (this.chaining)
+				return this;
+			else
+				return this.request();
 		},
 
 		// !!! if aKeys is String, split on ',' into an array
@@ -835,7 +839,10 @@ Kojac.Request = Kojac.Object.extend({
 				else
 					op.result_key = k;
 			});
-			return this;
+			if (this.chaining)
+				return this;
+			else
+				return this.request();
 		},
 
 		cacheRead: function(aKeys,aOptions) {
@@ -864,7 +871,10 @@ Kojac.Request = Kojac.Object.extend({
 					op.result_key = k;
 				op.value = v;
 			};
-			return this;
+			if (this.chaining)
+				return this;
+			else
+				return this.request();
 		},
 
 		destroy: function(aKeys,aOptions) {
@@ -884,7 +894,10 @@ Kojac.Request = Kojac.Object.extend({
 				else
 					op.result_key = k;
 			});
-			return this;
+			if (this.chaining)
+				return this;
+			else
+				return this.request();
 		},
 
 		execute: function(aKey,aValue,aOptions) {
@@ -897,11 +910,18 @@ Kojac.Request = Kojac.Object.extend({
 			op.params = (params && _.clone(params));
 			op.key = aKey;
 			op.value = aValue;
-			return this;
+			if (this.chaining)
+				return this;
+			else
+				return this.request();
 		},
 
-		request: function() {
-			return this.kojac.performRequest(this);
+		// can optionally supply a done handler
+		request: function(aDone) {
+			var result = this.kojac.performRequest(this);
+			if (aDone)
+				result = result.done(aDone);
+			return result;
 		}
 });
 
@@ -909,6 +929,40 @@ Kojac.Request = Kojac.Object.extend({
  * The Kojac core object
  * @class Kojac.Core
  * @extends Kojac.Object
+ *
+ * Normal API V2 Usage
+ *
+ * App = {};
+ * App.cache = {};
+ * App.kojac = new Kojac.Core({
+ *  remoteProvider: ...,
+ *  cache: App.cache
+ * });
+ *
+ * App.kojac.read('products').done(...);
+ * App.kojac.chain().create('products').execute('refresh').request(function(aKR){   // using optional done handler
+ *   // handle done here
+ * }).fail(function(aKR){
+ *   // handle fail here
+ * });
+ *
+ * Old API V1 usage
+ *
+ * App = {};
+ * App.cache = {};
+ * App.kojac = new Kojac.Core({
+ *  remoteProvider: ...,
+ *  cache: App.cache,
+ *  apiVersion: 1
+ * });
+ *
+ * App.kojac.readRequest('products').done(...);
+ * App.kojac.create('products').execute('refresh').request().done(function(aKR){
+ *   // handle done here
+ * }).fail(function(aKR){
+ *   // handle fail here
+ * });
+ *
  */
 Kojac.Core = Kojac.Object.extend({
 
@@ -916,9 +970,16 @@ Kojac.Core = Kojac.Object.extend({
 		objectFactory: null,
 		cache: null,
 		dependentKeys: {},
+		apiVersion: 2,      // set this to 1 for old read() and readRequest()
 
-		newRequest: function() {
-			return new Kojac.Request({kojac: this});
+		newRequest: function(aOptions) {
+			if (!aOptions)
+				aOptions = {};
+			aOptions = _.extend(aOptions,{kojac: this});
+			if (!(this.chaining in aOptions)) {
+				aOptions.chaining = this.apiVersion < 2
+			}
+			return new Kojac.Request(aOptions);
 		},
 
 //			var v;
@@ -1063,28 +1124,21 @@ Kojac.Core = Kojac.Object.extend({
 		// BEGIN User Functions
 
 		// These functions enable the user to build and trigger requests to the server/remote provider
-		// eg. kojac.read('cur_super').read('cur_super_products').request()
-		// or  kojac.readRequest('cur_super','cur_super_products')
+
+		chain: function() {
+			return this.newRequest({chaining: true});
+		},
 
 		create: function(aKeyValues,aOptions) {
 			var req = this.newRequest();
 			return req.create(aKeyValues,aOptions);
-		},
-		createRequest: function(aKeyValues,aOptions) {
-			return this.create(aKeyValues,aOptions).request();
 		},
 
 		read: function(aKeys,aOptions) {
 			var req = this.newRequest();
 			return req.read(aKeys,aOptions);
 		},
-		readRequest: function(aKeys,aOptions) {
-			return this.read(aKeys,aOptions).request();
-		},
-		cacheReadRequest: function(aKeys,aOptions) {
-			aOptions = _.extend({},aOptions,{preferCache: true});
-			return this.read(aKeys,aOptions).request();
-		},
+
 		cacheRead: function(aKeys,aOptions) {
 			aOptions = _.extend({},aOptions,{preferCache: true});
 			return this.read(aKeys,aOptions);
@@ -1094,26 +1148,51 @@ Kojac.Core = Kojac.Object.extend({
 			var req = this.newRequest();
 			return req.update(aKeyValues,aOptions);
 		},
-		updateRequest: function(aKeyValues,aOptions) {
-			return this.update(aKeyValues,aOptions).request();
-		},
 
 		destroy: function(aKeys,aOptions) {
 			var req = this.newRequest();
 			return req.destroy(aKeys,aOptions);
-		},
-		destroyRequest: function(aKeys,aOptions) {
-			return this.destroy(aKeys,aOptions).request();
 		},
 
 		execute: function(aKey,aValue,aOptions) {
 			var req = this.newRequest();
 			return req.execute(aKey,aValue,aOptions);
 		},
+		// END Convenience Functions
+
+		// BEGIN DEPRECATED API V1 FUNCTIONS
+		createRequest: function(aKeyValues,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
+			return this.create(aKeyValues,aOptions).request();
+		},
+		readRequest: function(aKeys,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
+			return this.read(aKeys,aOptions).request();
+		},
+		cacheReadRequest: function(aKeys,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
+			aOptions = _.extend({},aOptions,{preferCache: true});
+			return this.read(aKeys,aOptions).request();
+		},
+		updateRequest: function(aKeyValues,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
+			return this.update(aKeyValues,aOptions).request();
+		},
+		destroyRequest: function(aKeys,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
+			return this.destroy(aKeys,aOptions).request();
+		},
 		executeRequest: function(aKey,aValue,aOptions) {
+			if (this.apiVersion > 1)
+				throw "*Request methods are deprecated, and only supported when apiVersion is 1";
 			return this.execute(aKey,aValue,aOptions).request();
 		}
-		// END Convenience Functions
+		// END DEPRECATED API V1 FUNCTIONS
 });
 
 Kojac.Cache = Kojac.Object.extend({
