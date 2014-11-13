@@ -21,16 +21,17 @@ Gem::Specification.new do |s|
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
   
-  s.add_dependency "buzztools"
-  s.add_dependency "underscore_plus"
-  s.add_dependency "pundit", '~> 0.2.1'
-  s.add_development_dependency "jquery-rails"
+  s.add_runtime_dependency "buzztools", '~> 0.0.5'
+  s.add_runtime_dependency "underscore_plus", '~> 0.9.1'
+  s.add_runtime_dependency "pundit", '~> 0.2.3'
+  s.add_runtime_dependency "active_model_serializers", '= 0.9.0.alpha1'
 
-  s.add_development_dependency "rails", ">= 3.1"
-  s.add_development_dependency "active_model_serializers", '= 0.9.0.alpha1'
-  s.add_development_dependency "rspec-rails"
-  s.add_development_dependency "canjs-rails"
-  s.add_development_dependency "ember-rails"
-  s.add_development_dependency "capybara"
-  s.add_development_dependency "sqlite3"
+  #s.add_runtime_dependency "jquery-rails"
+  #s.add_runtime_dependency "rails", ">= 3.1"
+  # s.add_development_dependency "rspec-rails"
+  # s.add_development_dependency "canjs-rails"
+  # s.add_development_dependency "ember-rails"
+  # s.add_development_dependency "jquery-rails"
+  # s.add_development_dependency "capybara"
+  # s.add_development_dependency "sqlite3"
 end
