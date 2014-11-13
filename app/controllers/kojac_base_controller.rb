@@ -49,23 +49,26 @@ class KojacBaseController < ApplicationController
 
     begin
       input = params[:kojac]
+      send(:before_process,[input]) if respond_to? :before_process
       output = process_ops(input)
     rescue => e
-			raise e unless Rails.env.production?
+			#raise e unless Rails.env.production?
 			Rails.logger.debug e.message
-			Rails.logger.debug e.backtrace.join("\n")
+			Rails.logger.debug e.backtrace.join("\n") unless Rails.env.production?
 			handle_exception(e) if respond_to? :handle_exception
 	    output = {
 		    error: {
 			    format: 'KojacError',
 			    kind: 'Exception',
 		      errors: [{
-			      message: e.message,
-		        backtrace: e.backtrace
+			      message: e.message
 		      }]
 		    }
 	    }
+			output[:error][:errors][0][:backtrace] = e.backtrace unless Rails.env.production?
+	    output
     end
+		send(:after_process,[input,output]) if respond_to? :after_process
 		status = output[:error] ? :unprocessable_entity : :ok
     #output = ActiveModel::Serializer.new(output,current_user).to_json
     #sz = output.active_model_serializer.new(output)
