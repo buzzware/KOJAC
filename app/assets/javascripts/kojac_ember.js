@@ -8,6 +8,29 @@
  *
  *--------------------------------------------------------------------------*/
 
+/* Ideas for future
+
+stop using ids in collections, use full key instead
+
+so then cache can be like :
+{
+	allProducts: ['product__1','product__2'],
+	product__1: {
+		name: 'red toy'
+	},
+	product__2: {
+		name: 'blue toy'
+	}
+	productCol: Emberjac.modelCollection(
+		'allProducts',    // idCollection property, potentially path eg. 'App.cache.allProducts'. Binds to this and its contents
+		function(aArray){
+			// optionally filter and/or sort array here, return result leaving original unmodified
+		}
+	)
+}
+
+ */
+
 // recommended http://www.cerebris.com/blog/2012/03/06/understanding-ember-object/
 //var Person = Ember.Object.extend({
 //	chromosomes: null,
