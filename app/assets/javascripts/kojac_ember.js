@@ -38,115 +38,17 @@
 // 2.
 
 
-Kojac.EmberObjectFactory = Kojac.Object.extend({
+Kojac.EmberObjectFactory = Kojac.ObjectFactory.extend({
 
-	matchers: null,
+	defaultClass: Ember.Object,
 
-	register: function(aPairs) {
-		if (!aPairs)
-			return;
-		if (this.matchers===null)
-			this.matchers = [];
-		for (var i = 0; i < aPairs.length; i++)
-			this.matchers.push(aPairs[i]);
-	},
-
-	emberClassFromKey: function(aKey) {
-		var pair;
-		var re;
-		var newClass;
-		for (var i = 0; i < this.matchers.length; i++) {
-			pair = this.matchers[i];
-			re = pair[0];
-			if (!re.test(aKey))
-				continue;
-			newClass = pair[1];
-			break;
-		}
-		if (newClass===undefined)
-			newClass = Ember.Object;
-		return newClass;
-	},
-
-	emberObjectFactoryArray: function(aArray,aKey) {
-		var newClass = this.emberClassFromKey(aKey);
-		var result = [];
-		for (var i=0; i<aArray.length; i++) {
-			var newv = newClass.create(aArray[i]);
-			result.push(newv);
-		}
-		return result;
-	},
-
-	manufacture: function(aObject,aKey) {
-		var newClass = this.emberClassFromKey(aKey);
-		var newv = newClass.create(aObject);
-		return newv;
+	createInstance: function(aClass,aProperties) {
+		aProperties = aProperties || {};
+		return aClass.create(aProperties);
 	}
 
 });
 
-//App.EmberObjectFactory2 = Kojac.Object.extend({
-//
-//	namespace: null,
-//	matchers: null,
-//	defaultClass: null,
-//
-//	register: function(aPairs) {
-//		if (!aPairs)
-//			return;
-//		if (this.matchers===null)
-//			this.matchers = [];
-//		for (var i = 0; i < aPairs.length; i++)
-//			this.matchers.push(aPairs[i]);
-//	},
-//
-//	emberClassFromKey: function(aKey) {
-//		var pair;
-//		var re;
-//		var newClass;
-//		for (var i = 0; i < this.matchers.length; i++) {
-//			pair = this.matchers[i];
-//			re = pair[0];
-//			if (!re.test(aKey))
-//				continue;
-//			newClass = pair[1];
-//			break;
-//		}
-//		if (!newClass) {
-//			var ns = this.namespace || Window;
-//			var r = keyResource(aKey);
-//			if (r && (r[0]==r[0].toUpperCase()) && _.isFunction(ns[r]))
-//				newClass = ns[r];
-//		}
-//		if (!newClass)
-//			newClass = this.defaultClass;
-//		return newClass;
-//	},
-//
-//	emberObjectFactoryArray: function(aArray,aKey) {
-//		var newClass = this.emberClassFromKey(aKey);
-//		var result = [];
-//		for (var i=0; i<aArray.length; i++) {
-//			var newv = newClass.create(aArray[i]);
-//			result.push(newv);
-//		}
-//		return result;
-//	},
-//
-//	manufacture: function(aObject,aKey) {
-//		if (_.isArray(aObject)) {
-//			return this.emberObjectFactoryArray(aObject, aKey)
-//		} else {
-//			var newClass = this.emberClassFromKey(aKey);
-//			var newv = newClass.create(aObject);
-//			return newv;
-//		}
-//	}
-//
-//});
-//
-//
 Kojac.EmberModel = Ember.Object.extend({
 
 //	set: function(k,v) {
@@ -202,10 +104,6 @@ Kojac.EmberModel = Ember.Object.extend({
 
 });
 
-//fullName: Ember.computed('firstName', 'lastName', function() {
-//  return this.get('firstName') + ' ' + this.get('lastName');
-//})
-
 // in create, set cache with defaults merged with given values
 // getter - use cacheFor
 // setter - set cache with converted value
@@ -216,41 +114,12 @@ Kojac.EmberModel = Ember.Object.extend({
 
 Kojac.EmberModel.reopenClass({
 
-
-//	var SubModel1 = RndModel.extend({
-//		name: Ember.computed(function(aKey,aValue){
-//			// MyClass.metaForProperty('person');
-//			var m = Ember.meta(this);
-//			var d = m && m.descs[aKey];
-//			//var cache =  m.cache;
-//			var v;
-//
-//			if (arguments.length==2) { // set
-//				var t = d && d._meta && d._meta.type;
-//				if (t)
-//					v = Kojac.interpretValueAsType(aValue,t);
-//				else
-//					v = aValue;
-//				//cache[aKey] = v;
-//			} else {  // get
-//				v = Ember.cacheFor(this,aKey);
-//			}
-//			return v;
-//		}).meta({
-//			type: Int
-//		})
-//	});
-
-
 	extend: function() {
 		var defs = arguments[0];
 		var extender = {};
-//		var definitions = this.getDefinitions();
-//		var defaults = this.getDefaults();
 
 		var _type;
 		var _value;
-		//var _init;
 		if (defs) {
 			var destType;
 			var defaultValue;
@@ -305,47 +174,8 @@ Kojac.EmberModel.reopenClass({
 			}
 		}
 		var result = this._super(extender);
-//		result.setDefinitions(definitions);
-//		result.setDefaults(defaults);
 		return result;
 	}
-
-//	setDefinitions: function(aDefinitions) {
-//		this._definitions = (aDefinitions || {});
-//	},
-//
-//	getDefinitions: function() {
-//		return this._definitions || {};
-//	},
-//
-//	setDefaults: function(aDefaults) {
-//		this._defaults = (aDefaults || {});
-//	},
-//
-//	getDefaults: function() {
-//		return this._defaults || {};
-//	},
-
-//	__createWithMixins: Kojac.EmberModel.createWithMixins,
-//	createWithMixins: function() {
-//		var inputs = arguments;
-//		if (inputs.length) {
-//			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
-//		}
-//		var result = this.__createWithMixins.apply(this,inputs);
-//		return result;
-//  },
-//
-//	__create: Kojac.EmberModel.create,
-//	create: function() {
-//		var inputs = arguments;
-//		if (inputs.length) {
-//			inputs[0] = Kojac.readTypedProperties({},inputs[0],this.getDefinitions());
-//		}
-//		var result = this.__create.apply(this,inputs);
-//		return result;
-//	}
-
 });
 
 
@@ -409,7 +239,7 @@ Ember.computed.collectIds = function(aCollectionProperty,aPrefix,aModelCachePath
 	if (!aPrefix)
 		aPrefix = _.last(aCollectionProperty.split('.'));
 
-  return Ember.computed(aCollectionProperty, function(){
+  var result = Ember.computed(aCollectionProperty, function(){
 	  var cache;
 	  if (aModelCachePath)
 	    cache = Ember.Handlebars.get(this,aModelCachePath);  //(aModelCachePath && Ember.get(aModelCachePath));
@@ -418,15 +248,16 @@ Ember.computed.collectIds = function(aCollectionProperty,aPrefix,aModelCachePath
 	  var ids = Ember.Handlebars.get(this,aCollectionProperty);
 	  if (!ids)
 	 		return [];
-	 	var result = [];
+	 	var objects = [];
 	 	var item;
 	 	for (var i=0;i<ids.length;i++) {
 	 		item = cache.get(aPrefix+'__'+ids[i]);
 	 		if (!aFilterFn || aFilterFn(item))
-	 			result.push(item);
+	 			objects.push(item);
 	 	}
-	 	return result;
-  }).property(aModelCachePath,aCollectionProperty);
+	 	return objects;
+  });
+	return result.property.apply(result, _.compact([aModelCachePath,aCollectionProperty]));
 };
 
 Ember.computed.has_many = function(aResource,aForeignKey,aLocalPropertyPath,aModelCachePath,aFilterFn){
@@ -502,7 +333,3 @@ Ember.computed.modelByIdVersioned = function(aIdProperty,aVerProperty,aPrefix,aM
 		}
 	}).property(aModelCachePath,aIdProperty,aVerProperty);
 };
-
-
-
-

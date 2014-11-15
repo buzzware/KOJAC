@@ -743,9 +743,9 @@ Kojac.Operation = Kojac.Object.extend({
 		} else if (aResponseOp.error) {
 			this.error = aResponseOp.error;
 		} else {
-			var request_key = this.result_key || this.key;
-			var response_key = aResponseOp.result_key || this.key;
-			var final_result_key = this.result_key || response_key; // result_key should not be specified unless trying to override
+			var request_key = this.key;
+			var response_key = aResponseOp.result_key || aResponseOp.key || this.key;
+			var final_result_key = this.result_key || request_key; // result_key should not be specified unless trying to override
 			var results = _.isObjectStrict(aResponseOp.results) ? aResponseOp.results : _.createObject(response_key,aResponseOp.results); // fix up server mistake
 			var result;
 			if (aResponseOp.verb==='DESTROY')
@@ -1447,6 +1447,7 @@ Kojac.LocalStorageRemoteProvider = Kojac.Object.extend({
  */
 Kojac.ObjectFactory = Kojac.Object.extend({
 
+	namespace: null,
 	matchers: null,
 	defaultClass: Object,
 
@@ -1471,7 +1472,13 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 			newClass = pair[1];
 			break;
 		}
-		if (newClass===undefined)
+		if (!newClass) {
+			var ns = this.namespace || Window;
+			var r = keyResource(aKey);
+			if (r && (r[0]==r[0].toUpperCase()) && _.isFunction(ns[r]))
+				newClass = ns[r];
+		}
+		if (!newClass)
 			newClass = this.defaultClass;
 		return newClass;
 	},
@@ -1481,27 +1488,18 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 		return new aClass(aProperties);
 	},
 
-	copyProperties: function(aDest,aSource) {
-		return _.extend(aDest,aSource);
-	},
-
 	manufacture: function(aObject,aKey) {
 		var newClass = this.classFromKey(aKey);
-		var result;
-		var me = this;
+		var result = [];
 		if (_.isArray(aObject)) {
-			result = [];
-			for (var i=0; i<aObject.length; i++) {
-				var newv = me.createInstance(newClass,aObject[i]);
+			for (var i=0; i<aArray.length; i++) {
+				var newv = this.createInstance(newClass,aArray[i]);
 				result.push(newv);
 			}
 		} else {
-			var newClass = this.classFromKey(aKey);
-			result = me.createInstance(newClass,aObject);
+			result = this.createInstance(newClass,aObject);
 		}
-		console.log('END manufacture');
 		return result;
 	}
-
 });
 
