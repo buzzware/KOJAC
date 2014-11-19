@@ -746,7 +746,7 @@ Kojac.Operation = Kojac.Object.extend({
 		} else {
 			var request_key = this.key;
 			var response_key = aResponseOp.result_key || aResponseOp.key || this.key;
-			var final_result_key = this.result_key || request_key; // result_key should not be specified unless trying to override
+			var final_result_key = this.result_key || response_key; // result_key should not be specified unless trying to override
 			var results = _.isObjectStrict(aResponseOp.results) ? aResponseOp.results : _.createObject(response_key,aResponseOp.results); // fix up server mistake
 			var result;
 			if (aResponseOp.verb==='DESTROY')
@@ -1041,7 +1041,12 @@ Kojac.Core = Kojac.Object.extend({
 							} else {                                                                      // otherwise manufacture
 								if ((op.options.manufacture!==false) && (this.objectFactory)) {
 									// if primary key & reassigned by result_key then manufacture with original key
-									var mkey = (key === op.result_key) ? op.key : key;
+									var mkey = key;   // use the key from results by default
+									if (key === op.result_key) {  // this is the result key, so may have been renamed
+										var has_dot = op.key.indexOf('.') >= 0; // prefer original key unless it contains a dot
+										if (!has_dot)
+											mkey = op.key;
+									}
 									value = this.objectFactory.manufacture(value,mkey);
 								}
 							}

@@ -199,8 +199,8 @@ module Kojac
 
 		def self.included(aClass)
 	    #aClass.send :extend, ClassMethods
-	    aClass.send :include, ActiveSupport::Callbacks
-	    aClass.send :define_callbacks, :update_op, :scope => [:kind, :name]
+	    # aClass.send :include, ActiveSupport::Callbacks
+	    # aClass.send :define_callbacks, :update_op, :scope => [:kind, :name]
 	  end
 
 		#module ClassMethods
@@ -209,8 +209,6 @@ module Kojac
 		module_function
 
 		public
-
-		attr_accessor :item
 
 		def results
 			@results ||= {}
@@ -433,9 +431,9 @@ module Kojac
 			model = deduce_model_class
 			scope = Kojac.policy_scope(current_user, model, op) || model
 
-			if self.item = scope.load_by_key(op[:key],op)
+			if item = scope.load_by_key(op[:key],op)
 
-				run_callbacks :update_op do
+				#run_callbacks :update_op do
 					policy = Kojac.policy!(kojac_current_user,item,op)
 					item.update_permitted_attributes!(op[:value], policy)
 
@@ -462,7 +460,7 @@ module Kojac
 						#results[key] = assoc_item
 						merge_model_into_results(assoc_item,key)
 					end
-				end
+				#end
 			end
 			{
 				key: op[:key],
