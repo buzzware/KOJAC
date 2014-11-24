@@ -23,6 +23,7 @@ describe("LocalStorageRemoteProvider", function() {
 		]);
 		this.kojac = new Kojac.Core({
 			cache: this.cache,
+			apiVersion: 1,
 			remoteProvider: new Kojac.LocalStorageRemoteProvider(),
 			objectFactory: factory
 		});

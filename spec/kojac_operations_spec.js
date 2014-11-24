@@ -5,6 +5,7 @@ describe("Kojac Operations", function() {
 		var factory = new Kojac.ObjectFactory();
 		this.kojac = new Kojac.Core({
 			cache: this.cache,
+			apiVersion: 1,
 			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true, mockFilePath: 'mockjson/'}),
 			objectFactory: factory
 		});

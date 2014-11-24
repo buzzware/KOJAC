@@ -4,7 +4,8 @@ describe("Kojac Caching", function() {
 		this.cache = new Kojac.Cache();
 		this.kojac = new Kojac.Core({
 			cache: this.cache,
-			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true,mockFilePath: 'mockjson/'})
+			remoteProvider: new Kojac.RemoteProvider({useMockFileValues: true,mockFilePath: 'mockjson/'}),
+			apiVersion: 1
 		});
 	});
 

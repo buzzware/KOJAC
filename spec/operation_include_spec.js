@@ -21,6 +21,7 @@ describe("Operation include spec", function() {
 		]);
 		App.kojac = new Kojac.Core({
 			cache: App.cache,
+			apiVersion: 1,
 			remoteProvider: new Kojac.RemoteProvider(),
 			objectFactory: factory
 		});

@@ -1575,8 +1575,8 @@ Kojac.ObjectFactory = Kojac.Object.extend({
 		var newClass = this.classFromKey(aKey);
 		var result = [];
 		if (_.isArray(aObject)) {
-			for (var i=0; i<aArray.length; i++) {
-				var newv = this.createInstance(newClass,aArray[i]);
+			for (var i=0; i<aObject.length; i++) {
+				var newv = this.createInstance(newClass,aObject[i]);
 				result.push(newv);
 			}
 		} else {

@@ -8,6 +8,7 @@ describe("Error Handling (requires web server)", function() {
 		App.cache = new Kojac.Cache();
 		App.kojac = new Kojac.Core({
 			cache: App.cache,
+			apiVersion: 1,
 			remoteProvider: new Kojac.RemoteProvider({
 				serverPath: '/sdfhjdfsdfhsjkhjdfskhjdfsjhkdfsdsf',
 				timeout: 2000
@@ -44,6 +45,7 @@ describe("Error Handling (requires web server)", function() {
 		App.cache = new Kojac.Cache();
 		App.kojac = new Kojac.Core({
 			cache: App.cache,
+			apiVersion: 1,
 			remoteProvider: new Kojac.RemoteProvider({
 				//serverPath: '/sdfhjdfsdfhsjkhjdfskhjdfsjhkdfsdsf',
 				timeout: 2000
