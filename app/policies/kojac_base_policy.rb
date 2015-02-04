@@ -34,12 +34,20 @@ class KojacBasePolicy
   end
 
   # kojac methods
+  def create?
+	  record.class.ring_can?(query_ring,:create)
+  end
+
   def read?
 	  record.class.ring_can?(query_ring,:read)
   end
 
   def write?
 	  record.class.ring_can?(query_ring,:write)
+  end
+
+  def destroy?
+	  record.class.ring_can?(query_ring,:destroy)
   end
 
   # rails methods
@@ -49,10 +57,6 @@ class KojacBasePolicy
 
   def show?
 	  record.class.ring_can?(query_ring,:read)
-  end
-
-  def create?
-	  record.class.ring_can?(query_ring,:create)
   end
 
   def new?
@@ -67,31 +71,31 @@ class KojacBasePolicy
 	  record.class.ring_can?(query_ring,:write)
   end
 
-  def destroy?
-	  record.class.ring_can?(query_ring,:destroy)
-  end
-
   def scope
     Pundit.policy_scope!(user, record.class)
   end
 
-	def permitted_attributes(aAbility=nil)
-		raise "ability not given" unless (@op && @op[:verb]) || aAbility
-		if !aAbility && @op
-			aAbility = case @op[:verb]
-				when 'CREATE'
-				when 'UPDATE'
-					:write
-				when 'READ'
-					:read
-				when 'ADD'
-					:add
-				when 'REMOVE'
-					:remove
-				when 'CREATE_ON'
-					:create_on
-			end
+  def self.ability_from_op(aOp)
+	  return nil unless aOp
+	  case aOp[:verb]
+			when 'CREATE'
+			when 'UPDATE'
+				:write
+			when 'READ'
+				:read
+			when 'ADD'
+				:add
+			when 'REMOVE'
+				:remove
+			when 'CREATE_ON'
+				:create_on
 		end
+  end
+
+	def permitted_attributes(aAbility=nil)
+		#raise "Ability from op no longer supported" if !aAbility && @op && @op[:verb]
+		aAbility ||= self.class.ability_from_op(@op)
+		raise "ability not given" unless aAbility
 		cls = record.is_a?(Class) ? record : record.class
 		cls.permitted(query_ring,aAbility)
 	end
