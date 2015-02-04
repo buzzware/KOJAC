@@ -17,7 +17,7 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		result = do_op(read_op)
+		result,error = do_op(read_op)
 		result.keys.sort.should == (User::PUBLIC_FIELDS).map(&:to_s).sort
 	end
 
@@ -31,7 +31,7 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		result = do_op(read_op)
+		result,error = do_op(read_op)
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS + User::ADMIN_FIELDS + User::READ_ONLY_FIELDS).map(&:to_s).sort
 	end
 
@@ -49,7 +49,10 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		expect { do_op(send_op) }.to raise_exception(Pundit::NotAuthorizedError)
+		result,error = do_op(send_op)
+
+		error['kind'].should == 'Exception'
+		error.g?('errors.0.message').should == "You are not authorized to perform this action"
 		user2.reload
 		user2.last_name.should == original_name
 	end
@@ -63,7 +66,7 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		result = do_op(send_op)
+		result,error = do_op(send_op)
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS).map(&:to_s).sort
 	end
 
@@ -80,7 +83,7 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		result = do_op(send_op)
+		result,error = do_op(send_op)
 		result['last_name'].should == send_op.g?('value.last_name')
 		result.keys.sort.should == (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS).map(&:to_s).sort
 	end
@@ -99,7 +102,7 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		result = do_op(send_op)
+		result,error = do_op(send_op)
 		result['last_name'].should == send_op.g?('value.last_name')
 		user2.reload
 		user2.last_name.should == send_op.g?('value.last_name')
@@ -120,7 +123,9 @@ describe KojacBaseController do
 		draw_routes do
 			get ":controller/:action"
 		end
-		expect { do_op(send_op) }.to raise_exception(Pundit::NotAuthorizedError)
+		result,error = do_op(send_op)
+		error['kind'].should == 'Exception'
+		error.g?('errors.0.message').should == "You are not authorized to perform this action"
 		user2.reload
 		user2.last_name.should == original_name
 	end

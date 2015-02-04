@@ -1,17 +1,11 @@
-GIT
-  remote: git://github.com/buzzware/buzztools.git
-  revision: a403e6fad32b225be82021a6765df53954c8a3d0
-  ref: a403e6fad32b225be82021a6765df53954c8a3d0
-  specs:
-    buzztools (0.0.3)
-
 PATH
   remote: /Users/gary/repos/KOJAC
   specs:
-    kojac (0.10.0)
-      buzztools
-      pundit (~> 0.2.1)
-      underscore_plus
+    kojac (0.12.0)
+      active_model_serializers (= 0.9.0.alpha1)
+      buzztools (~> 0.0.5)
+      pundit (~> 0.2.3)
+      underscore_plus (~> 0.9.1)
 
 GEM
   remote: https://rubygems.org/
@@ -45,6 +39,7 @@ GEM
     arel (4.0.1)
     atomic (1.1.14)
     builder (3.1.4)
+    buzztools (0.0.8)
     diff-lcs (1.2.5)
     erubis (2.7.0)
     execjs (2.0.2)
@@ -71,7 +66,7 @@ GEM
     minitest (4.7.5)
     multi_json (1.8.2)
     polyglot (0.3.3)
-    pundit (0.2.1)
+    pundit (0.2.3)
       activesupport (>= 3.0.0)
     rack (1.5.2)
     rack-test (0.6.2)
@@ -139,7 +134,7 @@ PLATFORMS
 
 DEPENDENCIES
   active_model_serializers (= 0.9.0.alpha1)
-  buzztools!
+  buzztools (~> 0.0.8)
   factory_girl_rails
   faker
   jbuilder (~> 1.2)
