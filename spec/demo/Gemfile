@@ -45,7 +45,7 @@ end
 # Use debugger
 # gem 'debugger', group: [:development, :test]
 
-gem 'buzztools', :github => 'buzzware/buzztools', :ref => 'a403e6fad32b225be82021a6765df53954c8a3d0'
+gem 'buzztools', '~> 0.0.8' # :github => 'buzzware/buzztools', :ref => 'a403e6fad32b225be82021a6765df53954c8a3d0'
 #gem 'buzztools', :path => '/Users/gary/repos/buzztools'
 
 #gem 'kojac', :git => 'http://github.com/buzzware/KOJAC', :ref => '467817b22ebe5802323006746845a1d14764e00a'
