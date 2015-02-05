@@ -60,4 +60,71 @@ describe "ConcentricTestModel" do
 		ConcentricTestModel.permitted(:pleb,:sneeze).should == [:desk,:outside]
 	end
 
+	it "allow_filter enables custom rules despite heirarchy" do
+		class TestUser < ActiveRecord::Base
+			self.table_name = 'users'
+
+			include Concentric::Model
+
+			ring :pleb, [:read,:write] => [:name,:address]
+			ring :pleb, write: :password
+			ring :boss, [:read,:write] => [:notes]
+		end
+
+		class TestUserPolicy < KojacBasePolicy
+			allow_filter ability: :write, ring: :boss do |aPolicy,aResult,aRing,aAbility|   # boss can't write other people's passwords
+				aResult -= [:password] if aPolicy.user.id != aPolicy.record.id
+				aResult
+			end
+			allow_filter do |aPolicy,aResult,aRing,aAbility|   # boss can't write other people's passwords
+				aResult = [] if aPolicy.user.id != aPolicy.record.id and aPolicy.user.ring >= aPolicy.record.ring and aPolicy.user.ring >= Concentric.lookup_ring(:master)
+				aResult
+			end
+		end
+
+		TestUser.permitted(:pleb,:read).should == [:address,:name]
+		TestUser.permitted(:boss,:read).should == [:address,:name,:notes]
+		TestUser.permitted(:pleb,:write).should == [:address,:name,:password]
+		TestUser.permitted(:boss,:write).should == [:address,:name,:notes,:password] # permitted is a concentric method!
+		anyone = TestUser.create!(
+			ring: Concentric.lookup_ring(:anyone),
+			first_name: Faker::Name.first_name,
+			last_name:  Faker::Name.last_name,
+	    email: Faker::Internet.email
+		)
+		pleb = TestUser.create!(
+			ring: Concentric.lookup_ring(:pleb),
+			first_name: Faker::Name.first_name,
+			last_name:  Faker::Name.last_name,
+	    email: Faker::Internet.email
+		)
+		pleb2 = TestUser.create!(
+			ring: Concentric.lookup_ring(:pleb),
+			first_name: Faker::Name.first_name,
+			last_name:  Faker::Name.last_name,
+	    email: Faker::Internet.email
+		)
+		boss = TestUser.create!(
+			ring: Concentric.lookup_ring(:boss),
+			first_name: Faker::Name.first_name,
+			last_name:  Faker::Name.last_name,
+	    email: Faker::Internet.email
+		)
+		master = TestUser.create!(
+			ring: Concentric.lookup_ring(:master),
+			first_name: Faker::Name.first_name,
+			last_name:  Faker::Name.last_name,
+	    email: Faker::Internet.email
+		)
+		TestUserPolicy.new(pleb,pleb).permitted_attributes(:write).should == [:address,:name,:password]
+		TestUserPolicy.new(pleb,pleb2).permitted_attributes(:write).should == []
+		TestUserPolicy.new(boss,pleb).permitted_attributes(:write).should == [:address,:name,:notes]
+		TestUserPolicy.new(boss,boss).permitted_attributes(:write).should == [:address,:name,:notes,:password]
+		TestUserPolicy.new(boss,master).permitted_attributes(:write).should == []
+		TestUserPolicy.new(master,boss).permitted_attributes(:write).should == [:address,:name,:notes,:password]
+		TestUserPolicy.new(master,pleb).permitted_attributes(:write).should == [:address,:name,:notes,:password]
+		TestUserPolicy.new(master,master).permitted_attributes(:write).should == [:address,:name,:notes,:password]
+	end
+
+
 end

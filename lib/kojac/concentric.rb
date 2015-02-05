@@ -126,6 +126,8 @@ module Concentric::Model
 		end
 
 		# Query
+		# aFields specifies fields you require to act on
+		# This is no longer used by KojacBasePolicy because it does not observe its filters that operate on fields. It may still provide a faster check when there are no filters applied
 		def ring_can?(aRing,aAbility,aFields=nil)
 			if aFields
 				pf = permitted(aRing,aAbility)
