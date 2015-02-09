@@ -305,9 +305,9 @@ module Kojac
 				result_key = op[:result_key] || new_sub_item.kojac_key
 				merge_model_into_results(new_sub_item)
 			else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
+				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
 				policy = Kojac.policy!(kojac_current_user,model_class)
 				p_fields = policy.permitted_fields(:write)
-				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
 
 				p_fields = op[:value].permit( *p_fields )
 				model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter

@@ -52,25 +52,28 @@ class KojacBasePolicy
   end
 
 	def apply_filters(aResult, aAbility)
-		self.class.filters.each do |f|
-			options, handler = f
-			unless options[:all]
-				if rings = options[:ring]
-					next unless rings.include? query_ring
+		if self.class.filters
+			self.class.filters.each do |f|
+				options, handler = f
+				unless options[:all]
+					if rings = options[:ring]
+						next unless rings.include? query_ring
+					end
+					if abilities = options[:ability]
+						next unless abilities.include? aAbility
+					end
 				end
-				if abilities = options[:ability]
-					next unless abilities.include? aAbility
-				end
+				aResult = handler.call(self, aResult.clone, query_ring, aAbility)
 			end
-			aResult = handler.call(self, aResult.clone, query_ring, aAbility)
-		end if self.class.filters
-		aResult.uniq!
-		aResult.sort!
+			aResult.uniq!
+			aResult.sort!
+		end
 		aResult
 	end
 
   def inner_query_fields(aAbility)
-	  result = record.class.permitted(query_ring,aAbility)
+	  cls = record.is_a?(Class) ? record : record.class
+	  result = cls.permitted(query_ring,aAbility)
 	  result = apply_filters(result, aAbility)
 	  result
   end
