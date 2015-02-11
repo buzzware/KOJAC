@@ -396,7 +396,9 @@ module Kojac
 				result_key = op[:result_key] || op[:key]
 				results[result_key] = []
 				if scope
-					items = scope.load_by_key(key,op)
+					items = scope
+					items = send(:after_scope,items,op) if respond_to? :after_scope
+					items = items.load_by_key(key,op)
 					#items = scope.by_key(key,op)
 					#items = items.all
 					items.each do |item|

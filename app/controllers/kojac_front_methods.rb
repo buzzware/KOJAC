@@ -2,6 +2,14 @@ module KojacFrontMethods
 
 	protected
 
+	def unauthorized!(aMessage=nil)
+		raise aMessage || "You are not authorized to perform this action"
+	end
+
+	def kojac_current_user
+		current_user
+	end
+
 	def process_ops(aInput)
 		result = {}
 		if ops = aInput[:ops]

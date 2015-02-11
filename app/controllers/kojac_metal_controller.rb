@@ -10,10 +10,6 @@ class KojacMetalController < ActionController::Metal
 		@current_user ||= env['warden'].user #User.find_by(id: session[:user])
 	end
 
-	def kojac_current_user
-		current_user
-	end
-
 	public
 
   def index
