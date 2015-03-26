@@ -1,7 +1,7 @@
 PATH
   remote: /Users/gary/repos/KOJAC
   specs:
-    kojac (0.12.0)
+    kojac (0.13.0)
       active_model_serializers (= 0.9.0.alpha1)
       buzztools (~> 0.0.5)
       pundit (~> 0.2.3)

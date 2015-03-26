@@ -72,13 +72,13 @@ describe "ConcentricTestModel" do
 		end
 
 		class TestUserPolicy < KojacBasePolicy
-			allow_filter ability: :write, ring: :boss do |aPolicy,aResult,aRing,aAbility|   # boss can't write other people's passwords
-				aResult -= [:password] if aPolicy.user.id != aPolicy.record.id
-				aResult
+			allow_filter ability: :write, ring: :boss do |p,fields|   # boss can't write other people's passwords
+				fields -= [:password] if p.user.id != p.record.id
+				fields
 			end
-			allow_filter do |aPolicy,aResult,aRing,aAbility|   # boss can't write other people's passwords
-				aResult = [] if aPolicy.user.id != aPolicy.record.id and aPolicy.user.ring >= aPolicy.record.ring and aPolicy.user.ring >= Concentric.lookup_ring(:master)
-				aResult
+			allow_filter do |p,fields|   # boss can't write other people's passwords
+				fields = [] if p.user.id != p.record.id and p.user.ring >= p.record.ring and p.user.ring >= Concentric.lookup_ring(:master)
+				fields
 			end
 		end
 
