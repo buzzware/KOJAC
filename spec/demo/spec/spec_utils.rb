@@ -5,11 +5,11 @@ def stub_login_user(aValues=nil)
 	aValues ||= {}
 	aValues[:ring] ||= USER_RING
 	user = FactoryGirl.create(:user,aValues)
-	ApplicationController.any_instance.stub(:current_user).and_return(user)
+	KojacBaseController.any_instance.stub(:current_user).and_return(user)
 	user
 end
 
-def do_op(read_op)
+def exec_op(read_op)
 	content = {
 		options: {},
 		ops: [

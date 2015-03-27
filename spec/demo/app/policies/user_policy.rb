@@ -14,7 +14,7 @@ class UserPolicy < KojacBasePolicy
 			fields
 		else
 			if p.is_self? or (ring < p.record.ring and ring <= ADMIN_RING)    # can admin if self or admin and lower rank
-				case aAbility
+				case p.ability
 					when :write
 						fields += User::PUBLIC_FIELDS + User::PRIVATE_FIELDS
 					when :read

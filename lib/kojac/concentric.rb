@@ -80,7 +80,7 @@ module Concentric::Model
 
 	def self.included(aClass)
 		aClass.cattr_accessor :rings_abilities
-    aClass.rings_abilities = []  # [1] => {read: [:name,:address], delete: true}
+    aClass.rings_abilities = {}  # [1] => {read: [:name,:address], delete: true}
     aClass.send :extend, ClassMethods
   end
 
@@ -97,12 +97,12 @@ module Concentric::Model
 			raise "aAbilities must be a Hash" unless aAbilities.is_a? Hash # eg. :write => [:name,:address]
 
 			ring_rec = self.rings_abilities[aRing]
-				aAbilities.each do |abilities,fields|
-					abilities = [abilities] unless abilities.is_a?(Array)
-					fields = [fields] unless fields.is_a?(Array)
+			aAbilities.each do |abilities, fields|
+				abilities = [abilities] unless abilities.is_a?(Array)
+				fields = [fields] unless fields.is_a?(Array)
 				next if fields.empty?
-					abilities.each do |a|
-						a = a.to_sym
+				abilities.each do |a|
+					a = a.to_sym
 					ring_rec ||= {}
 					if fields==[:this]
 						ring_rec[a] = true unless ring_rec[a].to_nil
@@ -131,7 +131,9 @@ module Concentric::Model
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities) && self.rings_abilities.to_nil
 
 			fields = []
-			aRing.upto(rings_abilities.length-1) do |i|
+			ring_keys = rings_abilities.keys.sort
+			ring_keys.each do |i|
+				next unless i >= aRing
 				next unless ring_rec = rings_abilities[i]
 				if af = ring_rec[aAbility.to_sym]
 					next if af==true
@@ -159,7 +161,9 @@ module Concentric::Model
 			aRing = Concentric.lookup_ring(aRing)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities).to_nil && self.rings_abilities
 
-			aRing.upto(rings_abilities.length-1) do |i|
+			ring_keys = rings_abilities.keys.sort
+			ring_keys.each do |i|
+				next unless i >= aRing
 				next unless ring_rec = rings_abilities[i]
 				return true if ring_rec[aAbility.to_sym].to_nil
 			end

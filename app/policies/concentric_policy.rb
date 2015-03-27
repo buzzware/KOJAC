@@ -54,26 +54,28 @@ class ConcentricPolicy
 		aResult
 	end
 
-  def inner_query_fields
+  def inner_query_fields(aAbility=nil)
+	  aAbility = @ability = (aAbility || @ability)
+	  raise "Ability must be set or given" unless aAbility
 	  cls = record.is_a?(Class) ? record : record.class
-	  result = cls.permitted(user_ring,@ability)
+	  result = cls.permitted(user_ring,aAbility)
 	  result = apply_filters(result)
 	  result
   end
 
-	def permitted_attributes
-		inner_query_fields
+	def permitted_attributes(aAbility=nil)
+		inner_query_fields(aAbility)
 	end
 
-  def permitted_fields # (aAbility=nil)
-	  result = inner_query_fields
+  def permitted_fields(aAbility=nil)
+	  result = inner_query_fields(aAbility)
 	  cls = record.is_a?(Class) ? record : record.class
 		result.delete_if { |f| cls.reflections.has_key? f }
 		result
 	end
 
-	def permitted_associations # (aAbility=nil)
-	  result = inner_query_fields
+	def permitted_associations(aAbility=nil)
+	  result = inner_query_fields(aAbility)
 	  cls = record.is_a?(Class) ? record : record.class
 		result.delete_if { |f| !cls.reflections.has_key? f }
 		result

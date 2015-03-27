@@ -55,5 +55,8 @@ gem 'rspec-rails', :group => [:development,:test]
 #gem 'database_cleaner', :group => :test
 #gem "show_me_the_cookies", :group => :test
 #gem "faker", :group => [:development,:test]
+
+gem 'psych', '=2.0.4' # 2.0.5 causes some crash in the IDEA debugger, related to fakers
+
 gem "faker"
 gem "factory_girl_rails", :group => [:test, :development]

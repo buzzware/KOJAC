@@ -1,3 +1,5 @@
+require 'active_model/serializer'
+
 class KojacBaseSerializer < ActiveModel::Serializer
 
 	self.root = false
@@ -10,7 +12,7 @@ class KojacBaseSerializer < ActiveModel::Serializer
 
 	def attributes
 		attrs = nil
-		source = if policy = Kojac::policy(scope,object)
+		source = if policy = Pundit::policy(scope,object)
 			attrs = policy.permitted_attributes(:read).map(&:to_s)
 			object.attributes
 		elsif object.respond_to? :attributes
