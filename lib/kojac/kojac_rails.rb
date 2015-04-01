@@ -370,12 +370,13 @@ module Kojac
 		def kojac_setup(aCurrentUser,aOp)
 			self.current_user = aCurrentUser if self.respond_to? :current_user
 			self.op = aOp if self.respond_to? :op
-			self.verb = aOp[:verb] if self.respond_to? :verb
-			self.key = aOp[:key] if self.respond_to? :key
-			self.value = aOp[:value] if self.respond_to? :value
-			self.params = aOp[:params] || {} if self.respond_to? :params
-			self.options = aOp[:options] || {} if self.respond_to? :options
-			self.error = aOp[:error] if self.respond_to? :error
+			self.verb = aOp['verb'] if self.respond_to? :verb
+			self.key = aOp['key'] if self.respond_to? :key
+			self.value = aOp['value'] if self.respond_to? :value
+			self.params = aOp['params'] || {} if self.respond_to? :params
+			self.options = aOp['options'] || {} if self.respond_to? :options
+			self.error = aOp['error'] if self.respond_to? :error
+			self
 		end
 
 		def read_op
@@ -385,10 +386,10 @@ module Kojac
 			resource,id = key.split '__'
 			model = KojacUtils.model_class_for_key(key)
 			raise "model not found" unless scope = Pundit.policy_scope(current_user, model) || model
-			scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
 			if id   # item
-				if item = scope.load_by_key(key,op)
-					#item = item.first
+				scope = scope.where(id: id)
+				scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
+				if item = scope.first
 					#item.prepare(key,op) if item.respond_to? :prepare
 					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
 					merge_model_into_results(item,result_key,op[:options])
@@ -397,15 +398,16 @@ module Kojac
 					results[result_key] = null
 				end
 			else    # collection
-				result_key = op[:result_key] || op[:key]
-				results[result_key] = []
-				items = scope
-				items = send(:after_scope,items,op) if respond_to?(:after_scope) && rails_controller? # deprecated
-				items = items.load_by_key(key,op)
-				#items = scope.by_key(key,op)
-				#items = items.all
-				items.each do |item|
-					item.prepare(key,op) if item.respond_to? :prepare
+				if rails_controller? # deprecated
+					items = scope.respond_to?(:all) ? scope.all : scope.to_a
+					result_key = op[:result_key] || op[:key]
+					results[result_key] = []
+					items = send(:after_scope,items,op) if respond_to?(:after_scope)
+				else
+					scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
+					items = scope.respond_to?(:all) ? scope.all : scope.to_a
+					result_key = op[:result_key] || op[:key]
+					results[result_key] = []
 				end
 				if op[:options] and op[:options][:atomise]==false
 					items_json = []
