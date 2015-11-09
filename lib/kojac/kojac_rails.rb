@@ -267,7 +267,8 @@ module Kojac
 
 		def create_op
 			ring = current_ring
-			op = params[:op] unless self.respond_to? :op
+			op = (self.respond_to?(:op) && self.op || params[:op])
+			#op = params[:op] unless self.respond_to? :op
 			options = op[:options] || {}
 			resource,id,assoc = op['key'].split_kojac_key
 			model_class = KojacUtils.model_class_for_key(resource)
