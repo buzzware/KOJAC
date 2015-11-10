@@ -5,7 +5,7 @@ def stub_login_user(aValues=nil)
 	aValues ||= {}
 	aValues[:ring] ||= USER_RING
 	user = FactoryGirl.create(:user,aValues)
-	KojacBaseController.any_instance.stub(:current_user).and_return(user)
+	KojacFrontController.any_instance.stub(:current_user).and_return(user)
 	user
 end
 

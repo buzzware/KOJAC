@@ -389,7 +389,7 @@ module Kojac
 			raise "model not found" unless scope = Pundit.policy_scope(current_user, model) || model
 			if id   # item
 				scope = scope.where(id: id)
-				scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
+				scope = after_scope(scope) if respond_to?(:after_scope)
 				if item = scope.first
 					#item.prepare(key,op) if item.respond_to? :prepare
 					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
@@ -403,9 +403,9 @@ module Kojac
 					items = scope.respond_to?(:all) ? scope.all : scope.to_a
 					result_key = op[:result_key] || op[:key]
 					results[result_key] = []
-					items = send(:after_scope,items,op) if respond_to?(:after_scope)
+					items = after_scope(items) if respond_to?(:after_scope)
 				else
-					scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
+					scope = after_scope(scope) if respond_to?(:after_scope)
 					items = scope.respond_to?(:all) ? scope.all : scope.to_a
 					result_key = op[:result_key] || op[:key]
 					results[result_key] = []
@@ -438,7 +438,7 @@ module Kojac
 			model = KojacUtils.model_class_for_key(op[:key].base_key)
 			scope = Pundit.policy_scope(current_user, model) || model
 			raise "model not found" unless scope = Pundit.policy_scope(current_user, model) || model
-			scope = send(:after_scope,scope) if respond_to?(:after_scope) && respond_to?(:op)
+			scope = after_scope(scope) if respond_to?(:after_scope)
 
 			if item = scope.load_by_key(op[:key],op)
 

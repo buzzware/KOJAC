@@ -3,7 +3,7 @@
 require 'kojac/version'
 require 'kojac/concentric'
 require 'kojac/kojac_rails'
-require 'kojac/controller'
+require 'kojac/kojac_controller'
 
 module Kojac
   module Rails

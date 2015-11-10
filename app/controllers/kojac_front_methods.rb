@@ -11,7 +11,7 @@ module KojacFrontMethods
 		method = "#{op[:verb].to_s.downcase}_op".to_sym
 		resource = op[:key].split('__').first
 		
-		if controller_class = (resource.camelize+'Controller::Kojac').safe_constantize
+		if controller_class = (resource.camelize+'Controller::KojacController').safe_constantize
 			ctrlr = controller_class.new
 			raise "Unsupported verb #{op[:verb]} on #{class_name}" unless ctrlr.respond_to? method
 			ctrlr.kojac_setup(current_user,op) if ctrlr.respond_to? :kojac_setup
@@ -25,7 +25,7 @@ module KojacFrontMethods
 		# else
 		# 	raise "Controller class #{class_name} not defined" unless
 		else
-			result = self
+			raise "Controller not found for #{resource} resource. Please define #{resource.camelize+'Controller::KojacController'}"
 		end
 		output
 	end
