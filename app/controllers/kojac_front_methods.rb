@@ -34,8 +34,16 @@ module KojacFrontMethods
 		result = {}
 		if ops = aInput[:ops]
 			result[:ops] = []
-			ops.each do |op|
-				result[:ops] << do_op(op)
+			ops.each_with_index do |op,i|
+				output = do_op(op)
+				if output[:error]
+					result[:error] = output[:error]
+					result[:error_index] = i
+					result.delete :ops
+					break
+				else
+					result[:ops] << output
+				end
 			end
 		end
 		result

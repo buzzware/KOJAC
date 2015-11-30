@@ -19,14 +19,14 @@ def exec_op(read_op)
 	request.accept = "application/json"
 	post :receive, format: :json, kojac: content
 	result = nil
-	error = nil
+	err = nil
 	output = JSON.parse response.body
 	if output['error']
 		response.status.should >= 400
 		output.g?('error.errors').should be_a Array
 		output.g?('error.kind').should be
 		output['error']['errors'].length.should >= 1
-		error = output['error']
+		err = output['error']
 	else
 		response.status.should == 200
 		output['ops'].should be_a Array
@@ -34,7 +34,7 @@ def exec_op(read_op)
 		op = output['ops'].first
 		result = op['results'][op['result_key']]
 	end
-	[result,error]
+	[result,err]
 end
 
 # from http://openhood.com/rails/rails%203/2010/07/20/add-routes-at-runtime-rails-3/

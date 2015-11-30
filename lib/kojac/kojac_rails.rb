@@ -265,63 +265,95 @@ module Kojac
 			#end
 		end
 
+		# Unknown resource :
+		# CREATE: already there with given id => error
+		# READ: isn't there, or we don't have access => nil
+		# UPDATE: isn't there, or we don't have access => nil
+		# DESTROY: isn't there, or we don't have access => nil
+
 		def create_op
 			ring = current_ring
 			op = (self.respond_to?(:op) && self.op || params[:op])
 			#op = params[:op] unless self.respond_to? :op
 			options = op[:options] || {}
 			resource,id,assoc = op['key'].split_kojac_key
-			model_class = KojacUtils.model_class_for_key(resource)
-			if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
-				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}" unless model_class.ring_can?(ring,:create_on,assoc.to_sym)
-				item = KojacUtils.model_for_key(key_join(resource,id))
-				ma = model_class.reflect_on_association(assoc.to_sym)
-				a_value = op[:value]        # get data for this association, assume {}
-				raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
+			if model_class = KojacUtils.model_class_for_key(resource)
+				if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
+					if model_class.ring_can?(ring,:create_on,assoc.to_sym)
+						item = KojacUtils.model_for_key(key_join(resource,id))
+						ma = model_class.reflect_on_association(assoc.to_sym)
+						a_value = op[:value]        # get data for this association, assume {}
+						raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
 
-				a_model_class = ma.klass
-				policy = Pundit.policy!(current_user,a_model_class)
-				p_fields = policy.permitted_fields(:write)
-				fields = a_value.permit( *p_fields )
-				new_sub_item = nil
-				case ma.macro
-					when :has_many
-						a_model_class.write_op_filter(current_user,fields,a_value) if a_model_class.respond_to? :write_op_filter
-						new_sub_item = item.send(assoc.to_sym).create(fields)
+						a_model_class = ma.klass
+						policy = Pundit.policy!(current_user,a_model_class)
+						p_fields = policy.permitted_fields(:write)
+						fields = a_value.permit( *p_fields )
+						new_sub_item = nil
+						case ma.macro
+							when :has_many
+								a_model_class.write_op_filter(current_user,fields,a_value) if a_model_class.respond_to? :write_op_filter
+								new_sub_item = item.send(assoc.to_sym).create(fields)
+							else
+								raise "#{ma.macro} association unsupported in CREATE"
+						end
+						result_key = op[:result_key] || new_sub_item.kojac_key
+						merge_model_into_results(new_sub_item)
 					else
-						raise "#{ma.macro} association unsupported in CREATE"
-				end
-				result_key = op[:result_key] || new_sub_item.kojac_key
-				merge_model_into_results(new_sub_item)
-			else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
-				raise "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}" unless model_class.ring_can?(:create,ring)
-				policy = Pundit.policy!(current_user,model_class)
-				p_fields = policy.permitted_fields(:write)
+						error = {
+							code: 403,
+							status: "Forbidden",
+							message: "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}"
+						}
+					end
+				else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
+					if model_class.ring_can?(:create,ring)
+						policy = Pundit.policy!(current_user,model_class)
+						p_fields = policy.permitted_fields(:write)
 
-				p_fields = op[:value].permit( *p_fields )
-				model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
-				item = model_class.create!(p_fields)
+						p_fields = op[:value].permit( *p_fields )
+						model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
+						item = model_class.create!(p_fields)
 
-				options_include = options['include'] || []
-				included_assocs = []
-				p_assocs = policy.permitted_associations(:write)
-				if p_assocs
-					p_assocs.each do |a|
-						next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
-						create_on_association(item,a,a_value,ring)
-						included_assocs << a.to_sym
+						options_include = options['include'] || []
+						included_assocs = []
+						p_assocs = policy.permitted_associations(:write)
+						if p_assocs
+							p_assocs.each do |a|
+								next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
+								create_on_association(item,a,a_value,ring)
+								included_assocs << a.to_sym
+							end
+						end
+						item.save!
+						result_key = op[:result_key] || item.kojac_key
+						merge_model_into_results(item,result_key,:include => included_assocs)
+					else
+						error = {
+							code: 403,
+							status: "Forbidden",
+							message: "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}"
+						}
 					end
 				end
-				item.save!
-				result_key = op[:result_key] || item.kojac_key
-				merge_model_into_results(item,result_key,:include => included_assocs)
+			else
+				error = {
+					code: 501,
+					status: "Not Implemented",
+					message: "model class not found"
+				}
 			end
-			{
+			response = {
 				key: op[:key],
 			  verb: op[:verb],
-			  result_key: result_key,
-			  results: results
 			}
+			if error
+				response[:error] = error
+			else
+				response[:results] = results
+				response[:result_key] = result_key
+			end
+			response
 		end
 
 		protected
@@ -332,7 +364,7 @@ module Kojac
 
 		def merge_model_into_results(aItem,aResultKey=nil,aOptions=nil)
 			ring = current_ring
-			aResultKey ||= aItem.g? :kojac_key
+			aResultKey ||= aItem.g?(:kojac_key)
 			results[aResultKey] = (aItem && KojacUtils.to_jsono(aItem,scope: current_user))
 			if policy = Pundit.policy!(current_user,aItem)
 				aOptions ||= {}
@@ -384,50 +416,64 @@ module Kojac
 			op = (self.respond_to?(:op) && self.op || params[:op])
 			key = op[:key]
 			result_key = nil
+			error = nil
 			resource,id = key.split '__'
 			model = KojacUtils.model_class_for_key(key)
-			raise "model not found" unless scope = Pundit.policy_scope(current_user, model) || model
-			if id   # item
-				scope = scope.where(id: id)
-				scope = after_scope(scope) if respond_to?(:after_scope)
-				if item = scope.first
-					#item.prepare(key,op) if item.respond_to? :prepare
-					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
-					merge_model_into_results(item,result_key,op[:options])
-				else
-					result_key = op[:result_key] || op[:key]
-					results[result_key] = null
-				end
-			else    # collection
-				if rails_controller? # deprecated
-					items = scope.respond_to?(:all) ? scope.all : scope.to_a
-					result_key = op[:result_key] || op[:key]
-					results[result_key] = []
-					items = after_scope(items) if respond_to?(:after_scope)
-				else
+			#raise "model class not found" unless
+			if scope = Pundit.policy_scope(current_user, model) || model
+				if id   # item
+					scope = scope.where(id: id)
 					scope = after_scope(scope) if respond_to?(:after_scope)
-					items = scope.respond_to?(:all) ? scope.all : scope.to_a
-					result_key = op[:result_key] || op[:key]
-					results[result_key] = []
-				end
-				if op[:options] and op[:options][:atomise]==false
-					items_json = []
-					items_json = items.map {|i| KojacUtils.to_jsono(i,scope: current_user) }
-					results[result_key] = items_json
-				else
-					items.each do |m|
-						item_key = m.kojac_key
-						results[result_key] << item_key.split_kojac_key[1]
-						merge_model_into_results(m,item_key,op[:options])
+					if item = scope.first
+						#item.prepare(key,op) if item.respond_to? :prepare
+						result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
+						merge_model_into_results(item,result_key,op[:options])
+					else
+						result_key = op[:result_key] || op[:key]
+						results[result_key] = nil
+					end
+				else    # collection
+					if rails_controller? # deprecated
+						items = scope.respond_to?(:all) ? scope.all : scope.to_a
+						result_key = op[:result_key] || op[:key]
+						results[result_key] = []
+						items = after_scope(items) if respond_to?(:after_scope)
+					else
+						scope = after_scope(scope) if respond_to?(:after_scope)
+						items = scope.respond_to?(:all) ? scope.all : scope.to_a
+						result_key = op[:result_key] || op[:key]
+						results[result_key] = []
+					end
+					if op[:options] and op[:options][:atomise]==false
+						items_json = []
+						items_json = items.map {|i| KojacUtils.to_jsono(i,scope: current_user) }
+						results[result_key] = items_json
+					else
+						items.each do |m|
+							item_key = m.kojac_key
+							results[result_key] << item_key.split_kojac_key[1]
+							merge_model_into_results(m,item_key,op[:options])
+						end
 					end
 				end
+			else
+				error = {
+					code: 501,
+					status: "Not Implemented",
+					message: "model class not found"
+				}
 			end
-			{
+			response = {
 				key: op[:key],
 			  verb: op[:verb],
-			  results: results,
-			  result_key: result_key
 			}
+			if error
+				response[:error] = error
+			else
+				response[:results] = results
+				response[:result_key] = result_key
+			end
+			response
 		end
 
 		def update_op
@@ -437,11 +483,8 @@ module Kojac
 			result_key = nil
 			model = KojacUtils.model_class_for_key(op[:key].base_key)
 			scope = Pundit.policy_scope(current_user, model) || model
-			raise "model not found" unless scope = Pundit.policy_scope(current_user, model) || model
-			scope = after_scope(scope) if respond_to?(:after_scope)
-
-			if item = scope.load_by_key(op[:key],op)
-
+			scope = after_scope(scope) if scope && respond_to?(:after_scope)
+			if scope and item = scope.load_by_key(op[:key],op)
 				#run_callbacks :update_op do
 					policy = Pundit.policy!(current_user,item)
 					item.update_permitted_attributes!(op[:value], policy)
@@ -459,8 +502,7 @@ module Kojac
 						end
 					end
 
-					result_key = item.kojac_key
-					#results[result_key] = item
+					result_key = op[:result_key] || (item && item.kojac_key) || op[:key]
 					merge_model_into_results(item,result_key,op[:options])
 
 					associations.each do |a|
@@ -470,6 +512,9 @@ module Kojac
 						merge_model_into_results(assoc_item,key)
 					end
 				#end
+			else
+				result_key = op[:result_key] || op[:key]
+				results[result_key] = nil
 			end
 			{
 				key: op[:key],
@@ -483,8 +528,17 @@ module Kojac
 			ring = current_ring
 			op = (self.respond_to?(:op) && self.op || params[:op])
 			result_key = op[:result_key] || op[:key]
-			item = KojacUtils.model_for_key(op[:key])
-			item.destroy if item
+			# item = KojacUtils.model_for_key(op[:key])
+			# item.destroy if item
+			r,id,a = op[:key].split_kojac_key
+
+			if id
+				model = KojacUtils.model_class_for_key(op[:key].base_key)
+				scope = Pundit.policy_scope(current_user, model) || model
+				scope = after_scope(scope) if scope && respond_to?(:after_scope)
+				item = scope.where(id: id).first
+				item.destroy if item
+			end
 			results[result_key] = nil
 			{
 				key: op[:key],
@@ -572,11 +626,12 @@ module Kojac
 			action = rails_controller? ? "execute_#{action}" : "execute__#{action}"
 			raise "action #{action} not implemented on #{resource}" unless respond_to? action.to_sym
 			result = rails_controller? ? send(action.to_sym,op) : send(action)
-			if op[:error]
+			error = rails_controller? ? op[:error] : (respond_to?(:error).to_nil && send(:error))
+			if error
 				{
 					key: op[:key],
 				  verb: op[:verb],
-					error: op[:error]
+					error: error
 				}
 			else
 				result_key = op[:result_key] || op[:key]

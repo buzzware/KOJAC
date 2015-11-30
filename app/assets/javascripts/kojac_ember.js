@@ -280,7 +280,7 @@ Ember.computed.collectIds = function(aCollectionProperty,aPrefix,aModelCachePath
 	 	}
 	 	return objects;
   });
-	return result.property.apply(result, _.compact([aModelCachePath,aCollectionProperty]));
+	return result.property.apply(result, _.compact([aModelCachePath,aCollectionProperty+'.@each']));
 };
 
 Ember.computed.has_many = function(aResource,aForeignKey,aLocalPropertyPath,aModelCachePath,aFilterFn){

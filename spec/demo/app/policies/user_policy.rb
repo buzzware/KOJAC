@@ -25,18 +25,18 @@ class UserPolicy < KojacBasePolicy
 		end
 	end
 
-	# allow_filter ring: :guest_admin, ability: :write do |aPolicy,aResult,aRing,aAbility|
-	# 	aResult && aPolicy.is_self?
+	# allow_filter ring: :guest_admin, ability: :write do |aPolicy,aFields|
+	# 	aPolicy.is_self? ? aFields : []
 	# end
 	#
-	# allow_filter ability: [:create, :write] do |aPolicy,aRing,aAbility,aFields,aResult|
+	# allow_filter ability: [:create, :write] do |aPolicy,aFields|
 	# 	# logic here to set aResult
-	# 	aResult
+	# 	aFields
 	# end
 	#
 	# # prevent guest_admin from creating or writing Users, even though  outer rings can
-	# allow_filter ring: :guest_admin, ability: [:create, :write] do |aUser,aRecord,aAbility,aFields,aResult|
-	# 	false
+	# allow_filter ring: :guest_admin, ability: [:create, :write] do |aPolicy,aFields|
+	# 	[]
 	# end
 
 	# def permitted_attributes(aAbility=nil)
