@@ -4,46 +4,39 @@ class UserPolicy < KojacBasePolicy
 		user.id == record.id
 	end
 
-	# def write?
-	#   return query_ring <= ADMIN_RING if @record==User
-	#   raise "Bad record given" unless record.is_a? User
-	#   return ((query_ring <= SYSADMIN_RING) || is_self? || (
-	#
-	#   ))
-	# end
-
-	allow_filter do |aPolicy,aResult,aRing,aAbility|
-		if aRing <= SYSADMIN_RING     # sysadmin can do all, so pass through
-			aResult
-		elsif (aPolicy.user.owner_id and aPolicy.record.owner_id != aPolicy.user.owner_id)  # user has a ring that doesn't match record
-			aResult = []
-		elsif aRing > USER_RING       # outside of user, can't do anything
-			aResult
+	allow_filter do |p,fields|
+		ring = p.user.ring
+		if ring <= SYSADMIN_RING     # sysadmin can do all, so pass through
+			fields
+		elsif (p.user.owner_id and p.record.owner_id != p.user.owner_id)  # user has a ring that doesn't match record
+			fields = []
+		elsif ring > USER_RING       # outside of user, can't do anything
+			fields
 		else
-			if aPolicy.is_self? or (aRing < aPolicy.record.ring and aRing <= ADMIN_RING)    # can admin if self or admin and lower rank
-				case aAbility
+			if p.is_self? or (ring < p.record.ring and ring <= ADMIN_RING)    # can admin if self or admin and lower rank
+				case p.ability
 					when :write
-						aResult += User::PUBLIC_FIELDS + User::PRIVATE_FIELDS
+						fields += User::PUBLIC_FIELDS + User::PRIVATE_FIELDS
 					when :read
-						aResult += User::PRIVATE_FIELDS
+						fields += User::PRIVATE_FIELDS
 				end
 			end
-			aResult
+			fields
 		end
 	end
 
-	# allow_filter ring: :guest_admin, ability: :write do |aPolicy,aResult,aRing,aAbility|
-	# 	aResult && aPolicy.is_self?
+	# allow_filter ring: :guest_admin, ability: :write do |aPolicy,aFields|
+	# 	aPolicy.is_self? ? aFields : []
 	# end
 	#
-	# allow_filter ability: [:create, :write] do |aPolicy,aRing,aAbility,aFields,aResult|
+	# allow_filter ability: [:create, :write] do |aPolicy,aFields|
 	# 	# logic here to set aResult
-	# 	aResult
+	# 	aFields
 	# end
 	#
 	# # prevent guest_admin from creating or writing Users, even though  outer rings can
-	# allow_filter ring: :guest_admin, ability: [:create, :write] do |aUser,aRecord,aAbility,aFields,aResult|
-	# 	false
+	# allow_filter ring: :guest_admin, ability: [:create, :write] do |aPolicy,aFields|
+	# 	[]
 	# end
 
 	# def permitted_attributes(aAbility=nil)
@@ -56,7 +49,7 @@ class UserPolicy < KojacBasePolicy
 	#
 	# 	result = super(aAbility)
 	#
-	# 	if is_self? && query_ring <= USER_RING
+	# 	if is_self? && user_ring <= USER_RING
 	# 		case aAbility
 	# 			when :write
 	# 				result = (result | (User::PUBLIC_FIELDS + User::PRIVATE_FIELDS)).sort

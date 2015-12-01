@@ -1,8 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/kojac_front_methods.rb')
 
-class KojacBaseController < ActionController::Base
+class KojacFrontController < ActionController::Base
 
 	include KojacFrontMethods
+	include Kojac::ControllerOpMethods
+
 	respond_to :json
 
 	public

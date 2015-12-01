@@ -6,40 +6,49 @@ module KojacFrontMethods
 		raise aMessage || "You are not authorized to perform this action"
 	end
 
-	def kojac_current_user
-		current_user
+	def do_op(op)
+		output = nil
+		method = "#{op[:verb].to_s.downcase}_op".to_sym
+		resource = op[:key].split('__').first
+		
+		if controller_class = (resource.camelize+'Controller::KojacController').safe_constantize
+			ctrlr = controller_class.new
+			raise "Unsupported verb #{op[:verb]} on #{class_name}" unless ctrlr.respond_to? method
+			ctrlr.kojac_setup(current_user,op) if ctrlr.respond_to? :kojac_setup
+			output = ctrlr.send method
+		elsif (controller_class = (resource.camelize+'Controller').safe_constantize) and ctrlr = controller_class.new and ctrlr.respond_to?(method) # use rails controller
+		# 	result = controller_class.new
+		#	raise "Unsupported verb #{op[:verb]} on #{class_name}" unless ctrlr.respond_to? method
+			ctrlr.current_user = self.current_user
+			ctrlr.params = {op: op}
+			output = ctrlr.send method
+		# else
+		# 	raise "Controller class #{class_name} not defined" unless
+		else
+			raise "Controller not found for #{resource} resource. Please define #{resource.camelize+'Controller::KojacController'}"
+		end
+		output
 	end
-
+	
 	def process_ops(aInput)
 		result = {}
 		if ops = aInput[:ops]
 			result[:ops] = []
-			ops.each do |op|
-				method = "#{op[:verb].to_s.downcase}_op".to_sym
-				ctrlr = self.controller_for_key(op[:key])
-				if ctrlr.respond_to? method
-					ctrlr.params = {op: op}
-					output = ctrlr.send method
-					result[:ops] << output
+			ops.each_with_index do |op,i|
+				output = do_op(op)
+				if output[:error]
+					result[:error] = output[:error]
+					result[:error_index] = i
+					result.delete :ops
+					break
 				else
-					raise "Unsupported verb #{op[:verb]}"
+					result[:ops] << output
 				end
 			end
 		end
 		result
 	end
 
-	def controller_for_key(aKey)
-		resource = aKey.split('__').first
-		controller_name = resource.camelize+'Controller'
-		if controller = controller_name.constantize
-			result = controller.new
-			result.current_user = self.kojac_current_user
-			result
-		else
-			nil
-		end
-	end
 
 	def process_input(aInputJson)
 		output = nil
@@ -67,7 +76,7 @@ module KojacFrontMethods
 		end
 		send(:after_process, [aInputJson, output]) if respond_to? :after_process
 		status = output[:error] ? :unprocessable_entity : :ok
-		jsono = KojacUtils.to_jsono(output, scope: kojac_current_user)
+		jsono = KojacUtils.to_jsono(output, scope: current_user)
 		[jsono,status]
 	end
 

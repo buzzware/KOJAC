@@ -33,7 +33,20 @@
 #
 #end
 
-
+# Update: 2015-03-26
+#
+# * Extracted ConcentricPolicy from Kojac
+# * Concentric is now a way of creating Pundit policies based on ConcentricPolicy. It allows shorthand ring security for
+# simple scenarios, then allow_filter for refinement and arbitrary complex logic to be implemented
+# * Concentric works on the simple idea that there are 4 basic abilities: read, write, create and delete.
+# * Read and write apply primarily to fields; create and delete apply to records.
+# * Creating a record requires the ability to create the record, then normally you require the ability to write some fields.
+# * In order to read a record, you need the ability to read at least one field
+# * In order to write to a record, you need the ability to write at least one field
+# * In order to delete a record, you need the ability to delete the record
+# * With Concentric you first use the ring and
+#
+# implement Pundit Policy classes and methods (eg. update? show?) by querying these 4 abilities
 
 class Concentric
 
@@ -67,29 +80,29 @@ module Concentric::Model
 
 	def self.included(aClass)
 		aClass.cattr_accessor :rings_abilities
-    aClass.rings_abilities = []  # [1] => {read: [:name,:address], delete: true}
+    aClass.rings_abilities = {}  # [1] => {read: [:name,:address], delete: true}
     aClass.send :extend, ClassMethods
   end
 
 	module ClassMethods
 
 		# supports different formats :
-		# ring :sales, :write => [:name,:address]   ie. sales can write the name and address fields
-		# ring :sales, :read                        ie. sales can read this model
-		# ring :sales, [:read, :create, :destroy]   ie. sales can read, create and destroy this model
-		def ring(aRing,aAbilities)
+		# allow :sales, :write => [:name,:address]   ie. sales can write the name and address fields
+		# allow :sales, :read                        ie. sales can read this model
+		# allow :sales, [:read, :create, :destroy]   ie. sales can read, create and destroy this model
+		def allow(aRing,aAbilities)
 			#aRing.each {|r| ring(r,aAbilities)} and return if aRing.is_a? Array shouldn't need this because of ring system
 			aRing = Concentric.lookup_ring(aRing)
 			raise "aRing must be a number or a symbol defined in Concentric.config.ring_names" if !aRing.is_a?(Fixnum)
 			raise "aAbilities must be a Hash" unless aAbilities.is_a? Hash # eg. :write => [:name,:address]
 
 			ring_rec = self.rings_abilities[aRing]
-				aAbilities.each do |abilities,fields|
-					abilities = [abilities] unless abilities.is_a?(Array)
-					fields = [fields] unless fields.is_a?(Array)
+			aAbilities.each do |abilities, fields|
+				abilities = [abilities] unless abilities.is_a?(Array)
+				fields = [fields] unless fields.is_a?(Array)
 				next if fields.empty?
-					abilities.each do |a|
-						a = a.to_sym
+				abilities.each do |a|
+					a = a.to_sym
 					ring_rec ||= {}
 					if fields==[:this]
 						ring_rec[a] = true unless ring_rec[a].to_nil
@@ -106,6 +119,11 @@ module Concentric::Model
 			end
 		end
 
+		# deprecated
+		def ring(aRing,aAbilities)
+			allow(aRing,aAbilities)
+		end
+
 		# returns properties that this ring can use this ability on
 		def permitted(aRing,aAbility)
 			aRing = Concentric.lookup_ring(aRing)
@@ -113,7 +131,9 @@ module Concentric::Model
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities) && self.rings_abilities.to_nil
 
 			fields = []
-			aRing.upto(rings_abilities.length-1) do |i|
+			ring_keys = rings_abilities.keys.sort
+			ring_keys.each do |i|
+				next unless i >= aRing
 				next unless ring_rec = rings_abilities[i]
 				if af = ring_rec[aAbility.to_sym]
 					next if af==true
@@ -128,7 +148,7 @@ module Concentric::Model
 		# Query
 		# aFields specifies fields you require to act on
 		# This is no longer used by KojacBasePolicy because it does not observe its filters that operate on fields. It may still provide a faster check when there are no filters applied
-		def ring_can?(aRing,aAbility,aFields=nil)
+		def allowed?(aRing,aAbility,aFields=nil)
 			if aFields
 				pf = permitted(aRing,aAbility)
 				if aFields.is_a? Array
@@ -141,11 +161,18 @@ module Concentric::Model
 			aRing = Concentric.lookup_ring(aRing)
 			return [] unless aRing and rings_abilities = self.respond_to?(:rings_abilities).to_nil && self.rings_abilities
 
-			aRing.upto(rings_abilities.length-1) do |i|
+			ring_keys = rings_abilities.keys.sort
+			ring_keys.each do |i|
+				next unless i >= aRing
 				next unless ring_rec = rings_abilities[i]
 				return true if ring_rec[aAbility.to_sym].to_nil
 			end
 			return false
+		end
+
+		# deprecated
+		def ring_can?(aRing,aAbility,aFields=nil)
+			allowed?(aRing,aAbility,aFields)
 		end
 
 	end

@@ -2,7 +2,9 @@ source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 #ruby '2.0.0'
-gem 'rails', '4.0.1'
+gem 'rails', '~> 4.2'
+
+gem 'responders', '~> 2.0'
 
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3'
@@ -51,9 +53,12 @@ gem 'buzztools', '~> 0.0.8' # :github => 'buzzware/buzztools', :ref => 'a403e6fa
 #gem 'kojac', :git => 'http://github.com/buzzware/KOJAC', :ref => '467817b22ebe5802323006746845a1d14764e00a'
 gem 'kojac', :path => '../..'
 gem "active_model_serializers", '= 0.9.0.alpha1' #git: "http://github.com/rails-api/active_model_serializers"
-gem 'rspec-rails', :group => [:development,:test]
+gem 'rspec-rails', '~> 2.14', :group => [:development,:test]
 #gem 'database_cleaner', :group => :test
 #gem "show_me_the_cookies", :group => :test
 #gem "faker", :group => [:development,:test]
+
+gem 'psych', '=2.0.4' # 2.0.5 causes some crash in the IDEA debugger, related to fakers
+
 gem "faker"
 gem "factory_girl_rails", :group => [:test, :development]
