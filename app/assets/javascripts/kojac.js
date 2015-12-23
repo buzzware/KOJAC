@@ -1340,34 +1340,56 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 				contentType: "application/json; charset=utf-8",
 				dataType: "json"
 			};
-			var result = jQuery.ajax(this.serverPath,ajaxpars).done(function(aResult,aStatus,aXhr){
-				// poke results into request ops using request_op_index
-				aRequest.xhr = aXhr;
-				for (var i=0;i<server_ops.length;i++) {
-					var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
-					var opResult = (_.isArray(aResult.ops) && (i<aResult.ops.length) && aResult.ops[i]);
-					opRequest.fromCache = false;
-					opRequest.performed = true;
-					if (opResult.error) {
-						opRequest.error = opResult.error;
-						aRequest.handlers.handleError(opResult.error);
-						break;
+
+			var handleAjaxResponse = function(aResult,aStatus,aXhr) {
+				if (aResult instanceof Error || (aResult.error && !aResult.ops)) { // new code returns errors without ops
+					if (aResult.error) {
+						aRequest.error = aResult.error;
 					} else {
-						opRequest.receiveResult(opResult);
+						aRequest.error = me.interpretXhrError(aXhr);
+						if (aStatus == "parsererror") {
+							aRequest.error.http_code = 500;
+							aRequest.error.kind = "parserError";
+							aRequest.error.message = "A data error occurred (parserError)";
+							aRequest.error.debug_message = aResult.message;
+						}
+					}
+					aRequest.error.headers = aXhr.getAllResponseHeaders();
+					aRequest.error.response = aXhr.responseText;
+
+					for (var i=0;i<server_ops.length;i++) {
+						var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
+						opRequest.fromCache = false;
+						opRequest.performed = true;
+					}
+
+					aRequest.handlers.handleError(aRequest.error);
+				} else {    // ops may have errors
+					// poke results into request ops using request_op_index
+					aRequest.xhr = aXhr;
+					for (var i=0;i<server_ops.length;i++) {
+						var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
+						var opResult = (_.isArray(aResult.ops) && (i<aResult.ops.length) && aResult.ops[i]);
+						opRequest.fromCache = false;
+						opRequest.performed = true;
+						if (!opResult)
+							opResult = null;
+						if (aResult.error) {
+							opRequest.error = opResult.error;
+							aRequest.handlers.handleError(opResult.error);
+							break;
+						} else {
+							opRequest.receiveResult(opResult);
+						}
 					}
 				}
+			};
+
+			var result = jQuery.ajax(this.serverPath,ajaxpars).done(function(aResult,aStatus,aXhr){
+				handleAjaxResponse(aResult,aStatus,aXhr);
 				aRequest.handlers.callNext();
 			}).fail(function(aXhr,aStatus,aError){
-				aRequest.error = me.interpretXhrError(aXhr);
-				//_.removeKey(aRequest,'results');
-				for (var i=0;i<server_ops.length;i++) {
-					var opRequest = server_ops[i]; //aRequest.ops[request_op_index[i]];
-					opRequest.fromCache = false;
-					opRequest.performed = true;
-					//if (opRequest.error)
-					//	_.removeKey(opRequest,'results');
-				}
-				aRequest.handlers.handleError(aRequest.error);
+				handleAjaxResponse(aError,aStatus,aXhr);
 				aRequest.handlers.callNext();
 			});
 		}
@@ -1383,8 +1405,6 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 		if (http_code = (aXhr && aXhr.status)) {
 			kind = (aXhr.statusText && aXhr.statusText.replace(' ',''));
 			message = debug_message = aXhr.statusText;
-			headers = aXhr.getAllResponseHeaders();
-			response = aXhr.responseText;
 		} else {
 			http_code = null;
 			kind = "NetworkError";
@@ -1398,8 +1418,6 @@ Kojac.RemoteProvider = Kojac.Object.extend({
 			message: message,       // an explanation for normal humans
 			debug_message: debug_message, // an explanation for developers
 			xhr: aXhr,  // the original XHR object from jQuery
-			headers: headers,       // all response headers
-			response: response      // the response body
 		}
 	}
 });

@@ -626,12 +626,12 @@ module Kojac
 			action = rails_controller? ? "execute_#{action}" : "execute__#{action}"
 			raise "action #{action} not implemented on #{resource}" unless respond_to? action.to_sym
 			result = rails_controller? ? send(action.to_sym,op) : send(action)
-			error = rails_controller? ? op[:error] : (respond_to?(:error).to_nil && send(:error))
-			if error
+			err = rails_controller? ? op[:error] : (respond_to?(:error).to_nil && send(:error))
+			if err
 				{
 					key: op[:key],
 				  verb: op[:verb],
-					error: error
+					error: err
 				}
 			else
 				result_key = op[:result_key] || op[:key]

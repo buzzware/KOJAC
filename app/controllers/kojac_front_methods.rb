@@ -3,7 +3,7 @@ module KojacFrontMethods
 	protected
 
 	def unauthorized!(aMessage=nil)
-		raise aMessage || "You are not authorized to perform this action"
+		raise ::Pundit::NotAuthorizedError, aMessage||"You are not authorized to perform this action"
 	end
 
 	def do_op(op)
@@ -62,20 +62,34 @@ module KojacFrontMethods
 			Rails.logger.debug e.message
 			Rails.logger.debug e.backtrace.join("\n") unless Rails.env.production?
 			handle_exception(e) if respond_to? :handle_exception
-			output = {
-				error: {
-					format: 'KojacError',
-					kind: 'Exception',
-					errors: [{
-						message: e.message
-					}]
+
+			if e.is_a? ::Pundit::NotAuthorizedError
+				output = {
+					error: {
+						format: 'KojacError',
+						kind: 'Exception',
+						errors: [{
+							message: e.message
+						}]
+					}
 				}
-			}
+				status = :unauthorized
+			else
+				output = {
+					error: {
+						format: 'KojacError',
+						kind: 'Exception',
+						errors: [{
+							message: e.message
+						}]
+					}
+				}
+				status = output[:error] ? :unprocessable_entity : :ok
+			end
 			output[:error][:errors][0][:backtrace] = e.backtrace unless Rails.env.production?
 			output
 		end
 		send(:after_process, [aInputJson, output]) if respond_to? :after_process
-		status = output[:error] ? :unprocessable_entity : :ok
 		jsono = KojacUtils.to_jsono(output, scope: current_user)
 		[jsono,status]
 	end
