@@ -6,6 +6,10 @@ module KojacFrontMethods
 		raise ::Pundit::NotAuthorizedError, aMessage||"You are not authorized to perform this action"
 	end
 
+	def forbidden!(aMessage=nil)
+		raise ::StandardExceptions::Http::Forbidden , aMessage
+	end
+
 	def do_op(op)
 		output = nil
 		method = "#{op[:verb].to_s.downcase}_op".to_sym

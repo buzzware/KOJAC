@@ -170,19 +170,6 @@ module Kojac
 			self.class.to_s.snake_case.pluralize+'__'+self.id.to_s
 		end
 
-		def update_permitted_attributes!(aChanges, aPolicy)
-			aChanges = KojacUtils.upgrade_hashes_to_params(aChanges)
-			p_fields = aPolicy.permitted_fields(:write)
-			unauthorized! if p_fields.empty?
-			p_fields = aChanges.permit(*p_fields)
-			if ::Rails::VERSION::MAJOR <= 3
-				assign_attributes(p_fields, :without_protection => true)
-			else
-				assign_attributes(p_fields)
-			end
-			save!
-		end
-
 		def as_json(options = nil)
 			super
 		end
@@ -278,63 +265,75 @@ module Kojac
 			options = op[:options] || {}
 			resource,id,assoc = op['key'].split_kojac_key
 			if model_class = KojacUtils.model_class_for_key(resource)
-				if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
-					if model_class.ring_can?(ring,:create_on,assoc.to_sym)
-						item = KojacUtils.model_for_key(key_join(resource,id))
-						ma = model_class.reflect_on_association(assoc.to_sym)
-						a_value = op[:value]        # get data for this association, assume {}
-						raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
+				begin
+					if assoc  # create operation on an association eg. {verb: "CREATE", key: "order.items"}
+						if model_class.ring_can?(ring,:create_on,assoc.to_sym)
+							item = KojacUtils.model_for_key(key_join(resource,id))
+							ma = model_class.reflect_on_association(assoc.to_sym)
+							a_value = op[:value]        # get data for this association, assume {}
+							raise "create multiple not yet implemented for associations" unless a_value.is_a?(Hash)
 
-						a_model_class = ma.klass
-						policy = Pundit.policy!(current_user,a_model_class)
-						p_fields = policy.permitted_fields(:write)
-						fields = a_value.permit( *p_fields )
-						new_sub_item = nil
-						case ma.macro
-							when :has_many
-								a_model_class.write_op_filter(current_user,fields,a_value) if a_model_class.respond_to? :write_op_filter
-								new_sub_item = item.send(assoc.to_sym).create(fields)
-							else
-								raise "#{ma.macro} association unsupported in CREATE"
-						end
-						result_key = op[:result_key] || new_sub_item.kojac_key
-						merge_model_into_results(new_sub_item)
-					else
-						error = {
-							code: 403,
-							status: "Forbidden",
-							message: "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}"
-						}
-					end
-				else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
-					if model_class.ring_can?(:create,ring)
-						policy = Pundit.policy!(current_user,model_class)
-						p_fields = policy.permitted_fields(:write)
-
-						p_fields = op[:value].permit( *p_fields )
-						model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
-						item = model_class.create!(p_fields)
-
-						options_include = options['include'] || []
-						included_assocs = []
-						p_assocs = policy.permitted_associations(:write)
-						if p_assocs
-							p_assocs.each do |a|
-								next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
-								create_on_association(item,a,a_value,ring)
-								included_assocs << a.to_sym
+							a_model_class = ma.klass
+							policy = Pundit.policy!(current_user,a_model_class)
+							p_fields = policy.permitted_fields(:write)
+							fields = a_value.permit( *p_fields )
+							new_sub_item = nil
+							case ma.macro
+								when :has_many
+									a_model_class.write_op_filter(current_user,fields,a_value) if a_model_class.respond_to? :write_op_filter
+									new_sub_item = item.send(assoc.to_sym).build(fields)
+									policy = Pundit.policy!(current_user,new_sub_item)
+									unless policy.allow_write? and policy.valid?
+										forbidden! "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}"
+									end
+									new_sub_item.save!
+								else
+									raise "#{ma.macro} association unsupported in CREATE"
 							end
+							result_key = op[:result_key] || new_sub_item.kojac_key
+							merge_model_into_results(new_sub_item)
+						else
+							forbidden! "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}.#{assoc}"
 						end
-						item.save!
-						result_key = op[:result_key] || item.kojac_key
-						merge_model_into_results(item,result_key,:include => included_assocs)
-					else
-						error = {
-							code: 403,
-							status: "Forbidden",
-							message: "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}"
-						}
+					else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
+						if model_class.ring_can?(:create,ring)
+							policy = Pundit.policy!(current_user,model_class)
+							p_fields = policy.permitted_fields(:write)
+
+							p_fields = op[:value].permit( *p_fields )
+							model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
+							item = model_class.build(p_fields)
+							policy = Pundit.policy!(current_user,item)
+							unless policy.allow_write? and policy.valid?
+								forbidden! "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}"
+							end
+							item.save!
+
+							options_include = options['include'] || []
+							included_assocs = []
+							p_assocs = policy.permitted_associations(:write)
+							if p_assocs
+								p_assocs.each do |a|
+									next unless (a_value = op[:value][a]) || options_include.include?(a.to_s)
+									create_on_association(item,a,a_value,ring)
+									included_assocs << a.to_sym
+								end
+							end
+							item.save!
+							result_key = op[:result_key] || item.kojac_key
+							merge_model_into_results(item,result_key,:include => included_assocs)
+						else
+							forbidden! "User does not have permission for #{op[:verb]} operation on #{model_class.to_s}"
+						end
 					end
+				rescue ::StandardExceptions::Exception => e
+					error = {
+						code: e.status,
+						status: e.human_name,
+						message: e.message  #"User does not have permission for #{op[:verb]} operation on #{model_class.to_s}"
+					}
+				else
+					raise
 				end
 			else
 				error = {
@@ -476,6 +475,21 @@ module Kojac
 			response
 		end
 
+		def update_permitted_attributes!(aRecord,aValues,aPolicy)
+			aValues = KojacUtils.upgrade_hashes_to_params(aValues)
+			p_fields = aPolicy.permitted_fields(:write)
+			forbidden! if p_fields.empty?
+			forbidden! unless aPolicy.allow_write?
+			p_fields = aValues.permit(*p_fields)
+			if ::Rails::VERSION::MAJOR <= 3
+				aRecord.assign_attributes(p_fields, :without_protection => true)
+			else
+				aRecord.assign_attributes(p_fields)
+			end
+			forbidden! if !aPolicy.valid?
+			aRecord.save!
+		end
+
 		def update_op
 			result = nil
 			ring = current_ring
@@ -487,7 +501,7 @@ module Kojac
 			if scope and item = scope.load_by_key(op[:key],op)
 				#run_callbacks :update_op do
 					policy = Pundit.policy!(current_user,item)
-					item.update_permitted_attributes!(op[:value], policy)
+					update_permitted_attributes!(item,op[:value], policy)
 
 					associations = policy.permitted_associations(:write)
 					associations.each do |k|
@@ -497,7 +511,7 @@ module Kojac
 							when :belongs_to
 								if leaf = (item.send(k) || item.send("build_#{k}".to_sym))
 									policy = Pundit.policy!(current_user,leaf)
-									leaf.update_permitted_attributes!(op[:value][k], policy)
+									update_permitted_attributes!(leaf,op[:value][k], policy)
 								end
 						end
 					end
@@ -536,8 +550,11 @@ module Kojac
 				model = KojacUtils.model_class_for_key(op[:key].base_key)
 				scope = Pundit.policy_scope(current_user, model) || model
 				scope = after_scope(scope) if scope && respond_to?(:after_scope)
-				item = scope.where(id: id).first
-				item.destroy if item
+				if item = scope.where(id: id).first
+					policy = Pundit.policy!(current_user,item)
+					forbidden! if !policy.destroy?
+					item.destroy
+				end
 			end
 			results[result_key] = nil
 			{
