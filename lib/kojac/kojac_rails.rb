@@ -317,7 +317,10 @@ module Kojac
 						# see the 20171213-Permissions branch for work here
 						p_fields = op[:value].reverse_merge!(policy.defaults).permit( *p_fields )
 						model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
-						item = model_class.create!(p_fields)
+						item = model_class.new(p_fields)
+						policy = Pundit.policy!(current_user,item)
+						forbidden! unless policy.create?
+						item.save!
 
 						options_include = options['include'] || []
 						included_assocs = []
@@ -329,6 +332,7 @@ module Kojac
 								included_assocs << a.to_sym
 							end
 						end
+						forbidden! unless policy.create?
 						item.save!
 						result_key = op[:result_key] || item.kojac_key
 						merge_model_into_results(item,result_key,:include => included_assocs)
