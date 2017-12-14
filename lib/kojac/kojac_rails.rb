@@ -1,4 +1,5 @@
 require 'pundit'
+require 'standard_exceptions'
 
 Kernel.class_eval do
   def key_join(aResource,aId=nil,aAssoc=nil)
@@ -197,6 +198,8 @@ module Kojac
 
 	module ControllerOpMethods
 
+		include ::StandardExceptions::Methods
+
 		def self.included(aClass)
 	    #aClass.send :extend, ClassMethods
 	    # aClass.send :include, ActiveSupport::Callbacks
@@ -307,10 +310,11 @@ module Kojac
 						}
 					end
 				else    # create operation on a resource eg. {verb: "CREATE", key: "order_items"} but may have embedded association values
-					if model_class.ring_can?(:create,ring)
+					if model_class.ring_can?(ring,:create)
 						policy = Pundit.policy!(current_user,model_class)
 						p_fields = policy.permitted_fields(:write)
 
+						# see the 20171213-Permissions branch for work here
 						p_fields = op[:value].permit( *p_fields )
 						model_class.write_op_filter(current_user,p_fields,op[:value]) if model_class.respond_to? :write_op_filter
 						item = model_class.create!(p_fields)

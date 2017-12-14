@@ -26,6 +26,8 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "pundit", '~> 0.2.3'
   s.add_runtime_dependency "active_model_serializers", '= 0.9.0.alpha1'
 
+  s.add_runtime_dependency "standard_exceptions", '~> 0.1.4', '>= 0.1.4.0'
+
   #s.add_runtime_dependency "jquery-rails"
   #s.add_runtime_dependency "rails", ">= 3.1"
   s.add_development_dependency "rake"

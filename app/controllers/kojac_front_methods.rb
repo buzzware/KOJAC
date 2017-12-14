@@ -63,29 +63,26 @@ module KojacFrontMethods
 			Rails.logger.debug e.backtrace.join("\n") unless Rails.env.production?
 			handle_exception(e) if respond_to? :handle_exception
 
+			status_code = 422
 			if e.is_a? ::Pundit::NotAuthorizedError
-				output = {
-					error: {
-						format: 'KojacError',
-						kind: 'Exception',
-						errors: [{
-							message: e.message
-						}]
-					}
-				}
-				status = :unauthorized
+				status_code = 403
+			elsif e.is_a? ::StandardExceptions::Exception
+				status_code = e.status
 			else
-				output = {
-					error: {
-						format: 'KojacError',
-						kind: 'Exception',
-						errors: [{
-							message: e.message
-						}]
-					}
-				}
-				status = output[:error] ? :unprocessable_entity : :ok
+				status_code = output[:error] ? 422 : 200
 			end
+			status = ::Rack::Utils::HTTP_STATUS_CODES[status_code || 500].downcase.gsub(/\s|-/, '_').to_sym
+			output = {
+				error: {
+					format: 'KojacError',
+					kind: 'Exception',
+					errors: [{
+										 message: e.message,
+										 status: status.to_s,
+										 status_code: status_code
+									 }]
+				}
+			}
 			output[:error][:errors][0][:backtrace] = e.backtrace unless Rails.env.production?
 			output
 		end
