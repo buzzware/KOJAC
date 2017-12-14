@@ -103,7 +103,7 @@ class ConcentricPolicy
 			next unless ring_rec = rings_abilities[i]
 			#next unless ring_rec.has_key? aAbility.to_sym
 			perm = ring_rec[aAbility.to_sym]
-			return true if perm==true or perm.is_a?(Array) && !perm.empty?
+			return true if perm==true or perm==:this or perm.is_a?(Array) && !perm.empty?
 		end
 		false
 	end

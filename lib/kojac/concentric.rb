@@ -104,7 +104,7 @@ module Concentric::Model
 				abilities.each do |a|
 					a = a.to_sym
 					ring_rec ||= {}
-					if fields==[:this]
+					if fields==[:this] || fields==[true]
 						ring_rec[a] = true unless ring_rec[a].to_nil
 					else
 						ring_fields = ring_rec[a]

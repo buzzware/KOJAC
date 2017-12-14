@@ -69,7 +69,12 @@ module KojacFrontMethods
 			elsif e.is_a? ::StandardExceptions::Exception
 				status_code = e.status
 			else
-				status_code = output[:error] ? 422 : 200
+				if output.is_a? Hash
+					error = output[:error] && output['error']
+					status_code = 422
+				else
+					status_code = 500
+				end
 			end
 			status = ::Rack::Utils::HTTP_STATUS_CODES[status_code || 500].downcase.gsub(/\s|-/, '_').to_sym
 			output = {
